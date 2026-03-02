@@ -1,0 +1,59 @@
+name: Build Firmware
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-cores3:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install PlatformIO
+      run: |
+        pip install platformio
+        pio pkg install
+    
+    - name: Build M5Stack CoreS3
+      run: pio run -e m5stack-cores3
+    
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: firmware-cores3
+        path: .pio/build/m5stack-cores3/firmware.bin
+    
+    - name: Build Tests
+      run: pio run -e native_test
+
+  security-checks:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Check for secrets
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+    
+    - name: CodeQL Analysis
+      uses: github/codeql-action/init@v2
+      with:
+        languages: cpp
+    
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v2
+    
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2

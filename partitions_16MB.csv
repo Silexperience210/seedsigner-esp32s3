@@ -1,0 +1,20 @@
+# SeedSigner ESP32-S3 Partition Table
+# 16MB Flash (16777216 bytes)
+# Name,     Type, SubType,  Offset,    Size,      Flags
+
+# 4MB for firmware (2x2MB for OTA)
+factory,    app,  factory,  0x010000,  0x200000,
+ota_0,      app,  ota_0,    0x210000,  0x200000,
+ota_1,      app,  ota_1,    0x410000,  0x200000,
+
+# OTA data
+otadata,    data, ota,      0x610000,  0x002000,
+
+# NVS for settings (256KB)
+nvs,        data, nvs,      0x612000,  0x040000,
+
+# LittleFS for assets (fonts, images) - 2MB
+assets,     data, spiffs,   0x652000,  0x200000,
+
+# Reserved for future use - 9MB
+reserved,   data, 0xfe,     0x852000,  0x900000,
