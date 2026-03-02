@@ -1,0 +1,33 @@
+# PlatformIO
+.pio/
+.vscode/
+.clang_complete
+.gcc-flags.json
+
+# Build artifacts
+build/
+dist/
+*.elf
+*.bin
+*.hex
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
