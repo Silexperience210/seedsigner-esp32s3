@@ -12,8 +12,12 @@
 #define LV_COLOR_16_SWAP 0
 
 /* Memory settings */
-#define LV_MEM_CUSTOM 0
-#define LV_MEM_SIZE (64U * 1024U)
+#define LV_MEM_CUSTOM 1
+#define LV_MEM_CUSTOM_INCLUDE <stdlib.h>
+#define LV_MEM_CUSTOM_ALLOC   ps_malloc
+#define LV_MEM_CUSTOM_FREE    free
+#define LV_MEM_CUSTOM_REALLOC ps_realloc
+#define LV_MEM_SIZE (512U * 1024U)
 
 /* Display settings */
 #define LV_DISP_DEF_REFR_PERIOD 16
@@ -52,19 +56,19 @@
 #define LV_THEME_DEFAULT_DARK 1
 
 /* Widget usage */
-#define LV_USE_ARC        0
-#define LV_USE_BAR        1
+#define LV_USE_ARC        1
+#define LV_USE_BAR        0
 #define LV_USE_BTN        1
 #define LV_USE_BTNMATRIX  1
 #define LV_USE_CANVAS     0
-#define LV_USE_CHECKBOX   1
+#define LV_USE_CHECKBOX   0
 #define LV_USE_DROPDOWN   1
 #define LV_USE_IMG        1
 #define LV_USE_LABEL      1
 #define LV_USE_LINE       0
 #define LV_USE_ROLLER     0
-#define LV_USE_SLIDER     1
-#define LV_USE_SWITCH     1
+#define LV_USE_SLIDER     0
+#define LV_USE_SWITCH     0
 #define LV_USE_TEXTAREA   1
 #define LV_USE_TABLE      0
 

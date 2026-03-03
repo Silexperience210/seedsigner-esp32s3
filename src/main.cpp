@@ -16,6 +16,10 @@
 #include <Arduino.h>
 #include <M5Unified.h>
 #include <lvgl.h>
+#include <WiFi.h>
+#include <esp_timer.h>
+#include <esp_heap_caps.h>
+#include <esp_psram.h>
 
 // Core crypto
 #include "core/hardware_rng.h"
@@ -44,7 +48,7 @@ static lv_color_t *buf1 = nullptr;
 static lv_color_t *buf2 = nullptr;
 
 // App controller
-AppController g_app;
+UI::AppController g_app;
 
 // Display flush callback for LVGL
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p) {
@@ -113,7 +117,9 @@ void setup_security() {
     
     // Disable WiFi and BT (air-gapped)
     WiFi.mode(WIFI_OFF);
-    btStop();
+    WiFi.disconnect(true);
+    WiFi.setSleep(true);
+    // Note: Bluetooth is disabled via build flags -DBT_ENABLED=0
     
     // Initialize hardware RNG
     HardwareRNG::init();
@@ -141,8 +147,7 @@ void setup_hardware() {
     Serial.println("=== Hardware Setup ===");
     
     auto cfg = M5.config();
-    cfg.external_display.module_display = 1;
-    cfg.external_display.module_gpio = 1;
+    cfg.external_display.module_display = true;
     M5.begin(cfg);
     
     // Initialize display
@@ -169,15 +174,23 @@ void setup_hardware() {
     Serial.println("Hardware setup complete");
 }
 
-// LVGL tick handler
-static void lv_tick_task(void *arg) {
-    lv_tick_inc(5);  // 5ms tick
-}
-
 // Setup
 void setup() {
     Serial.begin(115200);
     delay(1000);
+    
+    // Initialize PSRAM first
+    Serial.println("Initializing PSRAM...");
+    if (psramFound()) {
+        size_t psram_size = ESP.getPsramSize();
+        size_t free_psram = ESP.getFreePsram();
+        Serial.printf("PSRAM: %d KB total, %d KB free\n", psram_size / 1024, free_psram / 1024);
+        
+        // Configure memory to prefer PSRAM
+        heap_caps_malloc_extmem_enable(1024);  // Allocations > 1KB go to PSRAM
+    } else {
+        Serial.println("WARNING: PSRAM not found!");
+    }
     
     Serial.println("\n\n");
     Serial.println("╔══════════════════════════════════════════════════╗");
@@ -195,19 +208,8 @@ void setup() {
     // LVGL
     setup_lvgl();
     
-    // Create timer for LVGL tick
-    esp_timer_create_args_t timer_args = {
-        .callback = &lv_tick_task,
-        .arg = nullptr,
-        .dispatch_method = ESP_TIMER_TASK,
-        .name = "lv_tick"
-    };
-    esp_timer_handle_t timer;
-    esp_timer_create(&timer_args, &timer);
-    esp_timer_start_periodic(timer, 5000);  // 5ms
-    
     // Initialize app controller
-    g_app.init();
+    UI::g_app.init();
     
     Serial.println("Setup complete, starting main loop");
 }
@@ -218,7 +220,7 @@ void loop() {
     lv_timer_handler();
     
     // Update app controller
-    g_app.update();
+    UI::g_app.update();
     
     // Check stack canary periodically
     static unsigned long last_check = 0;

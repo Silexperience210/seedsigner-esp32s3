@@ -1,6 +1,8 @@
 #include "core/qr_generator.h"
 #include <string.h>
 #include <stdlib.h>
+#include <cstdio>
+#include <esp_heap_caps.h>
 
 // Minimal QR Code implementation
 // Based on ISO/IEC 18004 - simplified for embedded use
@@ -190,7 +192,8 @@ bool generate(const uint8_t* data, size_t len, Code* qr, ECC ecc) {
     place_fixed_patterns(qr);
     
     // Encode data (simplified - proper encoding would segment and add headers)
-    uint8_t encoded[2953];
+    uint8_t* encoded = (uint8_t*)heap_caps_malloc(2953, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!encoded) return false;
     size_t encoded_len = 0;
     
     // Mode indicator (byte mode)
@@ -234,6 +237,7 @@ bool generate(const uint8_t* data, size_t len, Code* qr, ECC ecc) {
         }
     }
     
+    free(encoded);
     return true;
 }
 
@@ -268,7 +272,7 @@ bool encode_address(const char* address, Code* qr) {
     // Bitcoin UR format
     char uri[128];
     snprintf(uri, sizeof(uri), "bitcoin:%s", address);
-    return generate_text(uri, qr, ECC::MEDIUM);
+    return generate_text(uri, qr, ECC::ECC_MEDIUM);
 }
 
 size_t encode_psbt_multipart(const uint8_t* psbt, size_t len, 
@@ -294,7 +298,7 @@ bool encode_xpub(const char* xpub, Code* qr) {
     // SLIP-132 or standard xpub format
     char data[150];
     snprintf(data, sizeof(data), "xpub:%s", xpub);
-    return generate_text(data, qr, ECC::MEDIUM);
+    return generate_text(data, qr, ECC::ECC_MEDIUM);
 }
 
 } // namespace QR

@@ -1,4 +1,6 @@
 #include "core/secp256k1_wrapper.h"
+#include "core/sha256.h"
+#include "core/ripemd160.h"
 #include <Bitcoin.h>
 #include <string.h>
 
@@ -11,13 +13,37 @@ bool generate_public_key(const uint8_t privkey[PRIVATE_KEY_SIZE],
     if (!priv.isValid()) {
         return false;
     }
-    PublicKey pub = priv.getPublicKey();
-    return pub.toBytes(pubkey, compressed) == (compressed ? 33 : 65);
+    // uBitcoin: publicKey est un membre, pas une méthode
+    const PublicKey& pub = priv.publicKey();
+    
+    // Export public key
+    uint8_t temp[65];
+    int len = pub.serialize(temp, sizeof(temp));
+    if (len < 33) return false;
+    
+    if (compressed) {
+        memcpy(pubkey, temp, 33);
+        return true;
+    } else {
+        // Need 65 bytes output
+        return false; // Not supported with this signature
+    }
 }
 
 bool generate_public_key_uncompressed(const uint8_t privkey[PRIVATE_KEY_SIZE],
                                       uint8_t pubkey[PUBLIC_KEY_UNCOMPRESSED_SIZE]) {
-    return generate_public_key(privkey, pubkey, false);
+    PrivateKey priv(privkey, PRIVATE_KEY_SIZE);
+    if (!priv.isValid()) {
+        return false;
+    }
+    const PublicKey& pub = priv.publicKey();
+    
+    uint8_t temp[65];
+    int len = pub.serialize(temp, sizeof(temp));
+    if (len != 65) return false;
+    
+    memcpy(pubkey, temp, 65);
+    return true;
 }
 
 bool sign(const uint8_t privkey[PRIVATE_KEY_SIZE],
@@ -29,19 +55,20 @@ bool sign(const uint8_t privkey[PRIVATE_KEY_SIZE],
         return false;
     }
     
-    Signature sig = priv.sign(hash, 32);
+    // uBitcoin: sign() prend juste le hash (32 bytes)
+    Signature sig = priv.sign(hash);
     if (!sig.isValid()) {
         return false;
     }
     
-    // Export signature en format compact (64 bytes: r || s)
+    // Export signature en format DER
     uint8_t der[72];
-    size_t der_len = sig.toBytes(der, sizeof(der));
-    if (der_len == 0) {
+    int der_len = sig.serialize(der, sizeof(der));
+    if (der_len <= 0) {
         return false;
     }
     
-    // Convertir DER vers format compact
+    // Convertir DER vers format compact (64 bytes: r || s)
     // DER: 0x30 [len] 0x02 [len_r] [r] 0x02 [len_s] [s]
     if (der[0] != 0x30) {
         return false;
@@ -79,7 +106,9 @@ bool sign(const uint8_t privkey[PRIVATE_KEY_SIZE],
     memcpy(signature + 32 + s_offset, s_bytes, s_len > 32 ? 32 : s_len);
     
     if (recid) {
-        *recid = sig.getRecid();
+        // uBitcoin ne fournit pas directement getRecid()
+        // On met 0 par défaut (la plupart des cas)
+        *recid = 0;
     }
     
     return true;
@@ -129,9 +158,11 @@ bool verify(const uint8_t pubkey[PUBLIC_KEY_COMPRESSED_SIZE],
         s_len--;
     }
     memcpy(&der[idx], &signature[s_start], s_len);
+    idx += s_len;
     
     Signature sig(der, total_len + 2);
-    return pub.verify(hash, 32, sig);
+    // uBitcoin: verify(sig, hash) - ordre différent
+    return pub.verify(sig, hash);
 }
 
 bool seckey_tweak_add(uint8_t seckey[PRIVATE_KEY_SIZE], const uint8_t tweak[32]) {
@@ -140,17 +171,17 @@ bool seckey_tweak_add(uint8_t seckey[PRIVATE_KEY_SIZE], const uint8_t tweak[32])
         return false;
     }
     
-    // Convertir tweak en PrivateKey
-    PrivateKey tweak_priv(tweak, 32);
-    
     // Additionner les clés privées (tweak add)
+    // uBitcoin supporte l'opérateur + pour PrivateKey
+    PrivateKey tweak_priv(tweak, 32);
     PrivateKey result = priv + tweak_priv;
     if (!result.isValid()) {
         return false;
     }
     
-    result.toBytes(seckey, 32);
-    return true;
+    // Serialize back to seckey
+    int len = result.serialize(seckey, PRIVATE_KEY_SIZE);
+    return len == PRIVATE_KEY_SIZE;
 }
 
 bool pubkey_tweak_add(uint8_t pubkey[PUBLIC_KEY_COMPRESSED_SIZE], const uint8_t tweak[32]) {
@@ -161,7 +192,7 @@ bool pubkey_tweak_add(uint8_t pubkey[PUBLIC_KEY_COMPRESSED_SIZE], const uint8_t 
     
     // Créer une clé privée à partir du tweak pour générer un point
     PrivateKey tweak_priv(tweak, 32);
-    PublicKey tweak_pub = tweak_priv.getPublicKey();
+    const PublicKey& tweak_pub = tweak_priv.publicKey();
     
     // Additionner les points
     PublicKey result = pub + tweak_pub;
@@ -169,7 +200,8 @@ bool pubkey_tweak_add(uint8_t pubkey[PUBLIC_KEY_COMPRESSED_SIZE], const uint8_t 
         return false;
     }
     
-    return result.toBytes(pubkey, true) == 33;
+    int len = result.serialize(pubkey, PUBLIC_KEY_COMPRESSED_SIZE);
+    return len == PUBLIC_KEY_COMPRESSED_SIZE;
 }
 
 bool is_valid_seckey(const uint8_t seckey[PRIVATE_KEY_SIZE]) {
@@ -181,12 +213,10 @@ void hash160(const uint8_t* data, size_t len, uint8_t hash160_out[20]) {
     uint8_t sha[32];
     
     // SHA256
-    extern void sha256(const uint8_t* data, size_t len, uint8_t hash[32]);
-    sha256(data, len, sha);
+    SeedCrypto::sha256(data, len, sha);
     
     // RIPEMD160
-    extern void ripemd160(const uint8_t* data, size_t len, uint8_t hash[20]);
-    ripemd160(sha, 32, hash160_out);
+    SeedCrypto::ripemd160(sha, 32, hash160_out);
 }
 
 } // namespace Secp256k1

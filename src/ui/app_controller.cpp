@@ -2,7 +2,9 @@
 #include "core/hardware_rng.h"
 #include "core/secure_memory.h"
 #include "core/bitcoin_address.h"
+#include "drivers/secure_storage.h"
 #include <M5Unified.h>
+#include <esp_heap_caps.h>
 
 namespace UI {
 
@@ -12,18 +14,39 @@ AppController g_app;
 AppController::AppController() 
     : state_(AppState::BOOT),
       previous_state_(AppState::BOOT),
+      psbt_signer_(nullptr),
+      psbt_buffer_(nullptr),
       psbt_len_(0) {
     wallet_.clear();
-    memset(psbt_buffer_, 0, sizeof(psbt_buffer_));
 }
 
 AppController::~AppController() {
     wallet_.clear();
-    SecureMemory::zero(psbt_buffer_, sizeof(psbt_buffer_));
+    if (psbt_buffer_) {
+        SecureMemory::zero(psbt_buffer_, PSBT::MAX_PSBT_SIZE);
+        heap_caps_free(psbt_buffer_);
+    }
+    if (psbt_signer_) {
+        delete psbt_signer_;
+    }
 }
 
 void AppController::init() {
     Serial.println("AppController::init()");
+    
+    // Allocate PSBT buffer in PSRAM
+    psbt_buffer_ = (uint8_t*)heap_caps_malloc(PSBT::MAX_PSBT_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!psbt_buffer_) {
+        Serial.println("Failed to allocate PSBT buffer in PSRAM!");
+        // Fallback to normal malloc
+        psbt_buffer_ = (uint8_t*)malloc(PSBT::MAX_PSBT_SIZE);
+    }
+    if (psbt_buffer_) {
+        memset(psbt_buffer_, 0, PSBT::MAX_PSBT_SIZE);
+    }
+    
+    // Create PSBT signer
+    psbt_signer_ = new PSBT::Signer();
     
     // Create screens
     screen_welcome_ = new WelcomeScreen();
@@ -100,18 +123,22 @@ void AppController::setup_send_callbacks() {
         }
         
         // Sign PSBT
-        if (psbt_signer_.sign_all(&wallet_.master_key)) {
+        if (psbt_signer_ && psbt_signer_->sign_all(&wallet_.master_key)) {
             Serial.println("Transaction signed successfully");
             
-            // Export signed PSBT
-            uint8_t signed_psbt[PSBT::MAX_PSBT_SIZE];
-            size_t signed_len;
-            if (psbt_signer_.export_signed(signed_psbt, &signed_len)) {
-                // Display QR of signed PSBT
-                Serial.printf("Signed PSBT size: %d bytes\n", signed_len);
-            }
+            // Export signed PSBT (allocate dynamically)
+            uint8_t* signed_psbt = (uint8_t*)heap_caps_malloc(PSBT::MAX_PSBT_SIZE, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+            if (!signed_psbt) signed_psbt = (uint8_t*)malloc(PSBT::MAX_PSBT_SIZE);
             
-            SecureMemory::zero(signed_psbt, sizeof(signed_psbt));
+            if (signed_psbt) {
+                size_t signed_len;
+                if (psbt_signer_->export_signed(signed_psbt, &signed_len)) {
+                    // Display QR of signed PSBT
+                    Serial.printf("Signed PSBT size: %d bytes\n", signed_len);
+                }
+                SecureMemory::zero(signed_psbt, PSBT::MAX_PSBT_SIZE);
+                heap_caps_free(signed_psbt);
+            }
         } else {
             Serial.println("ERROR: Failed to sign transaction");
         }
@@ -119,7 +146,7 @@ void AppController::setup_send_callbacks() {
     
     screen_send_confirm_->set_cancel_callback([this]() {
         Serial.println("Cancel transaction clicked");
-        psbt_signer_.clear();
+        if (psbt_signer_) psbt_signer_->clear();
         go_to_main_menu();
     });
 }
@@ -230,7 +257,7 @@ void AppController::go_to_shutdown() {
     // Secure wipe
     Serial.println("Shutting down...");
     wallet_.clear();
-    psbt_signer_.clear();
+    if (psbt_signer_) psbt_signer_->clear();
     
     // Turn off display
     M5.Display.setBrightness(0);

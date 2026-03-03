@@ -13,10 +13,10 @@ constexpr size_t MAX_QR_SIZE = 2953;  // Version 40-L
 
 // Error correction levels
 enum class ECC {
-    LOW = 0,      // ~7%
-    MEDIUM = 1,   // ~15%
-    QUARTILE = 2, // ~25%
-    HIGH = 3      // ~30%
+    ECC_LOW = 0,      // ~7%
+    ECC_MEDIUM = 1,   // ~15%
+    ECC_QUARTILE = 2, // ~25%
+    ECC_HIGH = 3      // ~30%
 };
 
 // QR Code data
@@ -38,8 +38,8 @@ struct Code {
 };
 
 // Generate QR code from data
-bool generate(const uint8_t* data, size_t len, Code* qr, ECC ecc = ECC::MEDIUM);
-bool generate_text(const char* text, Code* qr, ECC ecc = ECC::MEDIUM);
+bool generate(const uint8_t* data, size_t len, Code* qr, ECC ecc = ECC::ECC_MEDIUM);
+bool generate_text(const char* text, Code* qr, ECC ecc = ECC::ECC_MEDIUM);
 
 // Render to bitmap (1-bit per pixel)
 // bitmap buffer must be at least ((width + 7) / 8) * width bytes
@@ -60,7 +60,7 @@ bool encode_address(const char* address, Code* qr);
 // Returns number of parts needed
 size_t encode_psbt_multipart(const uint8_t* psbt, size_t len, 
                               Code* parts, size_t max_parts,
-                              ECC ecc = ECC::MEDIUM);
+                              ECC ecc = ECC::ECC_MEDIUM);
 
 // Encode xpub as QR
 bool encode_xpub(const char* xpub, Code* qr);

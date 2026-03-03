@@ -77,9 +77,10 @@ int find_word_binary(const char* word) {
     while (left <= right) {
         int mid = left + (right - left) / 2;
         uint16_t idx = pgm_read_word(&SORTED_INDICES[mid]);
-        const char* candidate = BIP39::get_word(idx);
+        char candidate[16];
+        BIP39::get_word_copy(idx, candidate, sizeof(candidate));
         
-        int cmp = strcmp_P(word, candidate);
+        int cmp = strcmp(word, candidate);
         
         if (cmp == 0) {
             // Cache result

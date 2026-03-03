@@ -2,7 +2,10 @@
 #include <string.h>
 #include <stddef.h>
 
-// SHA256 implementation
+// SeedSigner SHA256 implementation
+// Renamed to avoid conflicts with other libraries
+
+namespace SeedCrypto {
 
 static const uint32_t K[64] = {
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -81,7 +84,6 @@ void sha256(const uint8_t* data, size_t len, uint8_t hash[32]) {
     padded[len] = 0x80;
     memset(padded + len + 1, 0, pad_len - 1);
 
-    // Append length as 64-bit big-endian
     for (int i = 0; i < 8; i++) {
         padded[total_len - 1 - i] = (bit_len >> (i * 8)) & 0xFF;
     }
@@ -92,11 +94,23 @@ void sha256(const uint8_t* data, size_t len, uint8_t hash[32]) {
 
     delete[] padded;
 
-    // Output hash
     for (int i = 0; i < 8; i++) {
         hash[i * 4] = (state[i] >> 24) & 0xFF;
         hash[i * 4 + 1] = (state[i] >> 16) & 0xFF;
         hash[i * 4 + 2] = (state[i] >> 8) & 0xFF;
         hash[i * 4 + 3] = state[i] & 0xFF;
     }
+}
+
+void sha256_double(const uint8_t* data, size_t len, uint8_t hash[32]) {
+    uint8_t temp[32];
+    sha256(data, len, temp);
+    sha256(temp, 32, hash);
+}
+
+} // namespace SeedCrypto
+
+// Legacy wrappers with weak linkage to avoid conflicts
+extern "C" __attribute__((weak)) void sha256(const uint8_t* data, size_t len, uint8_t hash[32]) {
+    SeedCrypto::sha256(data, len, hash);
 }

@@ -1,6 +1,7 @@
 #include "ui/screens.h"
 #include "core/secure_memory.h"
 #include <string.h>
+#include <cstdio>
 
 namespace UI {
 
@@ -116,7 +117,9 @@ void SeedGenerateScreen::create() {
     lv_textarea_set_one_line(word_list_, false);
     lv_obj_set_style_bg_color(word_list_, COLOR_SECONDARY, 0);
     lv_obj_set_style_text_color(word_list_, COLOR_TEXT, 0);
-    lv_textarea_set_readonly(word_list_, true);
+    // lv_textarea_set_readonly not available in LVGL v8
+    // Use disabled state instead:
+    lv_obj_add_state(word_list_, LV_STATE_DISABLED);
     
     // Confirm button
     btn_confirm_ = lv_btn_create(screen_);

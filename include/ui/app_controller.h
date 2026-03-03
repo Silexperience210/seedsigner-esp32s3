@@ -3,6 +3,7 @@
 #include "ui/screens.h"
 #include "core/bip32_secp256k1.h"
 #include "core/bip39.h"
+#include "core/psbt_signer.h"
 
 // Application state machine
 // Manages wallet state, navigation, and user flows
@@ -92,9 +93,15 @@ private:
     void derive_master_key(const uint8_t* seed);
     void update_wallet_fingerprint();
     
-    // PSBT handling
-    PSBT::Signer psbt_signer_;
-    uint8_t psbt_buffer_[PSBT::MAX_PSBT_SIZE];
+    // Screen callbacks setup
+    void setup_welcome_callbacks();
+    void setup_main_menu_callbacks();
+    void setup_receive_callbacks();
+    void setup_send_callbacks();
+    
+    // PSBT handling (allocated dynamically in PSRAM)
+    PSBT::Signer* psbt_signer_;
+    uint8_t* psbt_buffer_;
     size_t psbt_len_;
 };
 

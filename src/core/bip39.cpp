@@ -25,11 +25,11 @@ static int strcmp_P(const char* s1, const char* s2_p) {
 
 // Binary search for word index (optimized for 2048 words)
 int find_word_index(const char* word) {
-    // Linear search for now - binary search on PROGMEM is complex
-    // Could optimize with hash table if needed
+    // Linear search with buffer copy
+    char w[16];
     for (uint16_t i = 0; i < WORDLIST_SIZE; i++) {
-        const char* w = get_word(i);
-        if (strcmp_P(word, w) == 0) {
+        get_word_copy(i, w, sizeof(w));
+        if (strcmp(word, w) == 0) {
             return i;
         }
     }

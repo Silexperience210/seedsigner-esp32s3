@@ -16,7 +16,7 @@
 #define NTAG424_PAGES 256
 
 static bool initialized = false;
-static CardType detected_card = CardType::UNKNOWN;
+static PN532_NFC::CardType detected_card = PN532_NFC::CardType::UNKNOWN;
 
 // I2C communication helpers
 static bool pn532_write_command(const uint8_t* cmd, size_t len) {
@@ -105,7 +105,7 @@ bool detect_card() {
     uint8_t response[32];
     size_t len;
     if (!pn532_read_response(response, sizeof(response), &len)) {
-        detected_card = CardType::UNKNOWN;
+        detected_card = PN532_NFC::CardType::UNKNOWN;
         return false;
     }
     
@@ -113,11 +113,11 @@ bool detect_card() {
     if (len > 0 && response[0] == 0x01) {
         // Card detected, try to identify type
         // Simplified: assume NTAG424 for now
-        detected_card = CardType::NTAG424;
+        detected_card = PN532_NFC::CardType::NTAG424;
         return true;
     }
     
-    detected_card = CardType::UNKNOWN;
+    detected_card = PN532_NFC::CardType::UNKNOWN;
     return false;
 }
 

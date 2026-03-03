@@ -20,7 +20,7 @@ inline void zero(volatile T* ptr, size_t len) {
         p[i] = 0x00;  // Final pass
     }
     // Memory barrier to prevent optimization
-    __asm__ volatile "" ::: "memory");
+    __asm__ volatile("" ::: "memory");
 }
 
 // Specialized versions for common sizes
