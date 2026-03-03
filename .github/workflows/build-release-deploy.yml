@@ -26,7 +26,7 @@ jobs:
         python-version: '3.11'
     
     - name: Cache PlatformIO
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.platformio/.cache
@@ -41,24 +41,10 @@ jobs:
         pip install platformio
         pio --version
     
-    - name: Check Files
-      run: |
-        echo "=== Project files ==="
-        ls -la
-        echo "=== PlatformIO.ini ==="
-        cat platformio.ini
-        echo "=== Partitions ==="
-        cat partitions_custom.csv
-    
     - name: Build Firmware
-      run: pio run --verbose
+      run: pio run
       env:
         PLATFORMIO_BUILD_FLAGS: ""
-    
-    - name: Check Build Output
-      run: |
-        echo "=== Build output ==="
-        ls -la .pio/build/esp32-s3/
     
     - name: Prepare Web Files
       run: |
@@ -68,11 +54,10 @@ jobs:
         cp .pio/build/esp32-s3/firmware.bin _site/seedsigner-esp32s3.bin
         cp web/index.html _site/
         cp web/manifest.json _site/
-        echo "=== Web files ==="
         ls -la _site/
     
     - name: Upload Pages Artifact
-      uses: actions/upload-pages-artifact@v3
+      uses: actions/upload-pages-artifact@v4
       with:
         path: _site/
 
