@@ -1,5 +1,7 @@
 # SeedSigner ESP32-S3
 
+[![Build](https://github.com/silexperience210/seedsigner-esp32s3/actions/workflows/build-release-deploy.yml/badge.svg)](https://github.com/silexperience210/seedsigner-esp32s3/actions)
+
 Hardware Bitcoin wallet for ESP32-S3 (M5Stack CoreS3).
 
 ## Features
