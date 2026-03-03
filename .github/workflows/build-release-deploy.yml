@@ -1,17 +1,17 @@
-name: Build, Release and Deploy
+name: Build and Deploy
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
 
 jobs:
@@ -30,71 +30,22 @@ jobs:
         pip install platformio
         pio platform install espressif32
     
-    - name: Cache PlatformIO
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.platformio/.cache
-          ~/.platformio/packages
-        key: ${{ runner.os }}-platformio-${{ hashFiles('platformio.ini') }}
-    
     - name: Build Firmware
       run: pio run
     
     - name: Prepare Web Files
       run: |
-        mkdir -p web_deploy
-        cp .pio/build/esp32-s3/bootloader.bin web_deploy/bootloader.bin
-        cp .pio/build/esp32-s3/partitions.bin web_deploy/partition-table.bin
-        cp .pio/build/esp32-s3/firmware.bin web_deploy/seedsigner-esp32s3.bin
-        cp web/index.html web_deploy/
-        
-        # Copy manifest
-        cp web/manifest.json web_deploy/manifest.json
+        mkdir -p _site
+        cp .pio/build/esp32-s3/bootloader.bin _site/bootloader.bin
+        cp .pio/build/esp32-s3/partitions.bin _site/partition-table.bin
+        cp .pio/build/esp32-s3/firmware.bin _site/seedsigner-esp32s3.bin
+        cp web/index.html _site/
+        cp web/manifest.json _site/
     
-    - name: Upload Firmware Artifact
-      uses: actions/upload-artifact@v4
+    - name: Upload Pages Artifact
+      uses: actions/upload-pages-artifact@v3
       with:
-        name: firmware
-        path: |
-          .pio/build/esp32-s3/firmware.bin
-          .pio/build/esp32-s3/bootloader.bin
-          .pio/build/esp32-s3/partitions.bin
-    
-    - name: Upload Web Artifact  
-      uses: actions/upload-artifact@v4
-      with:
-        name: web-files
-        path: web_deploy/
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Download Firmware
-      uses: actions/download-artifact@v4
-      with:
-        name: firmware
-        path: firmware/
-    
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      if: github.event_name == 'push'
-      with:
-        tag_name: v1.0.0-${{ github.run_number }}
-        name: Release v1.0.0 Build ${{ github.run_number }}
-        files: |
-          firmware/firmware.bin
-          firmware/bootloader.bin
-          firmware/partitions.bin
-        generate_release_notes: true
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        path: _site/
 
   deploy:
     needs: build
@@ -103,20 +54,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-    - name: Download Web Files
-      uses: actions/download-artifact@v4
-      with:
-        name: web-files
-        path: _site/
-    
-    - name: Setup Pages
-      uses: actions/configure-pages@v4
-    
-    - name: Upload to Pages
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: _site/
-    
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
