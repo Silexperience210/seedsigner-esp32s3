@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SeedSigner ESP32-S3 - Web Installer</title>
+    <meta name="description" content="Flash SeedSigner firmware to your M5Stack CoreS3 directly from the browser">
+    
+    <!-- ESP Web Tools -->
+    <script type="module" src="https://unpkg.com/esp-web-tools@9/dist/web/install-button.js?module"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        header {
+            margin-bottom: 40px;
+        }
+        
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #F7931A 0%, #ffab40 100%);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 10px 40px rgba(247, 147, 26, 0.3);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #F7931A 0%, #ffab40 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #888;
+            margin-bottom: 40px;
+        }
+        
+        .install-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(247, 147, 26, 0.2);
+        }
+        
+        .warning-box {
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid #FFC107;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 0 12px 12px 0;
+            text-align: left;
+        }
+        
+        .warning-box h3 {
+            color: #FFC107;
+            margin-bottom: 10px;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+        
+        .feature {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: left;
+        }
+        
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+        
+        .feature h3 {
+            color: #F7931A;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .feature p {
+            color: #aaa;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .steps {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 40px 0;
+            text-align: left;
+        }
+        
+        .steps h2 {
+            color: #F7931A;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+        }
+        
+        .step-number {
+            background: #F7931A;
+            color: #000;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .step-content h4 {
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .step-content p {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        .compatibility {
+            margin: 40px 0;
+            padding: 30px;
+            background: rgba(0, 255, 0, 0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(0, 255, 0, 0.2);
+        }
+        
+        .compatibility h2 {
+            color: #4CAF50;
+            margin-bottom: 15px;
+        }
+        
+        .device-list {
+            list-style: none;
+            text-align: left;
+        }
+        
+        .device-list li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        
+        .device-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        footer {
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        footer a {
+            color: #F7931A;
+            text-decoration: none;
+        }
+        
+        .github-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+        
+        .github-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .install-section {
+                padding: 25px;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">🔐</div>
+            <h1>SeedSigner ESP32-S3</h1>
+            <p class="subtitle">Air-Gapped Bitcoin Hardware Wallet - Web Installer</p>
+        </header>
+        
+        <div class="install-section">
+            <h2>🔧 Install Firmware</h2>
+            <p style="margin-bottom: 30px; color: #aaa;">
+                Connect your M5Stack CoreS3 via USB and click install below.<br>
+                Works directly in Chrome, Edge, or Opera - no software needed!
+            </p>
+            
+            <esp-web-install-button
+                manifest="./manifest.json"
+                install-supported>
+                <button slot="activate" style="
+                    background: linear-gradient(135deg, #F7931A 0%, #ffab40 100%);
+                    color: #000;
+                    border: none;
+                    padding: 20px 60px;
+                    font-size: 1.3rem;
+                    font-weight: bold;
+                    border-radius: 12px;
+                    cursor: pointer;
+                    box-shadow: 0 4px 15px rgba(247, 147, 26, 0.4);
+                    transition: transform 0.2s, box-shadow 0.2s;
+                " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(247, 147, 26, 0.6)';" 
+                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(247, 147, 26, 0.4)';">
+                    📥 Install SeedSigner v1.0.0
+                </button>
+                <span slot="unsupported" style="color: #ff6b6b;">
+                    ⚠️ Your browser doesn't support Web Serial. Please use Chrome, Edge, or Opera.
+                </span>
+                <span slot="not-allowed" style="color: #ff6b6b;">
+                    ⚠️ You need to use HTTPS to install firmware.
+                </span>
+            </esp-web-install-button>
+            
+            <div class="warning-box">
+                <h3>⚠️ Important Security Notice</h3>
+                <p>
+                    This firmware is for testing and educational purposes. Always verify the source code before installing 
+                    hardware wallet firmware. This is a community project - use at your own risk. Never share your seed phrase 
+                    with anyone or any website.
+                </p>
+            </div>
+        </div>
+        
+        <div class="steps">
+            <h2>📋 Installation Steps</h2>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>Connect Hardware</h4>
+                    <p>Connect your M5Stack CoreS3 to your computer via USB-C cable.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>Enter Boot Mode (if needed)</h4>
+                    <p>Hold BOOT button while pressing RESET, then release BOOT. This puts the device in flash mode.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>Click Install</h4>
+                    <p>Click the orange "Install" button above and select the serial port for your device.</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h4>Wait for Completion</h4>
+                    <p>The firmware will be automatically downloaded and flashed. Wait for the success message (about 1-2 minutes).</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                    <h4>Start Using</h4>
+                    <p>Reset your device. The SeedSigner interface will appear. Create a new wallet or restore from seed!</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="compatibility">
+            <h2>✅ Compatible Devices</h2>
+            <ul class="device-list">
+                <li>M5Stack CoreS3 (recommended)</li>
+                <li>M5Stack CoreS3 SE</li>
+                <li>ESP32-S3-DevKitC-1 with GC0308 camera</li>
+                <li>Custom ESP32-S3 boards with ILI9342C display + GC0308</li>
+            </ul>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🔐</div>
+                <h3>Air-Gapped Security</h3>
+                <p>WiFi and Bluetooth disabled. Private keys never leave the device RAM.</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">📷</div>
+                <h3>QR Code Support</h3>
+                <p>Scan PSBTs from your wallet software and display signed transactions as QR.</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🎲</div>
+                <h3>Hardware RNG</h3>
+                <p>Multiple entropy sources including TRNG, camera noise, and timing jitter.</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">📱</div>
+                <h3>Touch Interface</h3>
+                <p>Beautiful LVGL interface optimized for 2.0" touchscreen displays.</p>
+            </div>
+        </div>
+        
+        <footer>
+            <p>SeedSigner ESP32-S3 Edition v1.0.0 - Open Source Bitcoin Hardware Wallet</p>
+            <a href="https://github.com/silexdev/seedsigner-esp32s3" class="github-link" target="_blank">
+                <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                </svg>
+                View Source on GitHub
+            </a>
+            <p style="margin-top: 20px; font-size: 0.8rem;">
+                Powered by <a href="https://esphome.github.io/esp-web-tools/" target="_blank">ESP Web Tools</a> | 
+                Built with <a href="https://lvgl.io/" target="_blank">LVGL</a>
+            </p>
+        </footer>
+    </div>
+    
+    <script>
+        // Log for debugging
+        console.log('SeedSigner Web Installer loaded');
+        console.log('User Agent:', navigator.userAgent);
+        console.log('Web Serial supported:', 'serial' in navigator);
+    </script>
+</body>
+</html>
