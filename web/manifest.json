@@ -7,10 +7,6 @@
   "builds": [
     {
       "chipFamily": "ESP32-S3",
-      "ota": {
-        "path": "seedsigner-esp32s3-v1.0.0.bin",
-        "md5": "PLACEHOLDER_MD5"
-      },
       "parts": [
         {
           "path": "bootloader.bin",
@@ -21,7 +17,7 @@
           "offset": 32768
         },
         {
-          "path": "seedsigner-esp32s3-v1.0.0.bin",
+          "path": "seedsigner-esp32s3.bin",
           "offset": 65536
         }
       ]

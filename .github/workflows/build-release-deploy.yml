@@ -46,19 +46,11 @@ jobs:
         mkdir -p web_deploy
         cp .pio/build/esp32-s3/bootloader.bin web_deploy/bootloader.bin
         cp .pio/build/esp32-s3/partitions.bin web_deploy/partition-table.bin
-        cp .pio/build/esp32-s3/firmware.bin web_deploy/seedsigner-esp32s3-v1.0.0.bin
+        cp .pio/build/esp32-s3/firmware.bin web_deploy/seedsigner-esp32s3.bin
         cp web/index.html web_deploy/
         
-        # Calculate MD5
-        MD5=$(md5sum web_deploy/seedsigner-esp32s3-v1.0.0.bin | cut -d' ' -f1)
-        
-        # Update manifest
-        sed "s/PLACEHOLDER_MD5/$MD5/g" web/manifest.json > web_deploy/manifest.json
-        
-        # Create checksums
-        cd web_deploy
-        md5sum seedsigner-esp32s3-v1.0.0.bin > firmware.md5
-        sha256sum seedsigner-esp32s3-v1.0.0.bin > firmware.sha256
+        # Copy manifest
+        cp web/manifest.json web_deploy/manifest.json
     
     - name: Upload Firmware Artifact
       uses: actions/upload-artifact@v4
