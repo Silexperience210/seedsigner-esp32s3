@@ -259,23 +259,35 @@ void setup_lvgl() {
     
     lv_init();
     
-    // Allocate draw buffer (in PSRAM if available)
-    static lv_color_t* draw_buf = nullptr;
-    const size_t draw_buf_size = DISPLAY_WIDTH * DISPLAY_HEIGHT / 10;
+    // Allocate draw buffers (in PSRAM if available)
+    static lv_color_t* draw_buf1 = nullptr;
+    static lv_color_t* draw_buf2 = nullptr;
+    const size_t buf_size = DISPLAY_WIDTH * DISPLAY_HEIGHT / 10;
     
     #if CONFIG_SPIRAM_USE
-    draw_buf = (lv_color_t*)heap_caps_malloc(
-        draw_buf_size * sizeof(lv_color_t),
+    draw_buf1 = (lv_color_t*)heap_caps_malloc(
+        buf_size * sizeof(lv_color_t),
+        MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT
+    );
+    draw_buf2 = (lv_color_t*)heap_caps_malloc(
+        buf_size * sizeof(lv_color_t),
         MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT
     );
     #else
-    draw_buf = (lv_color_t*)malloc(draw_buf_size * sizeof(lv_color_t));
+    draw_buf1 = (lv_color_t*)malloc(buf_size * sizeof(lv_color_t));
+    draw_buf2 = (lv_color_t*)malloc(buf_size * sizeof(lv_color_t));
     #endif
     
-    if (!draw_buf) {
-        Serial.println("[LVGL] ERROR: Failed to allocate draw buffer!");
+    if (!draw_buf1 || !draw_buf2) {
+        Serial.println("[LVGL] ERROR: Failed to allocate draw buffers!");
+        if (draw_buf1) free(draw_buf1);
+        if (draw_buf2) free(draw_buf2);
         return;
     }
+    
+    // Initialize display buffer
+    static lv_disp_draw_buf_t disp_buf;
+    lv_disp_draw_buf_init(&disp_buf, draw_buf1, draw_buf2, buf_size);
     
     // Register display driver
     static lv_disp_drv_t disp_drv;
@@ -283,12 +295,7 @@ void setup_lvgl() {
     disp_drv.hor_res = DISPLAY_WIDTH;
     disp_drv.ver_res = DISPLAY_HEIGHT;
     disp_drv.flush_cb = lvgl_flush_cb;
-    disp_drv.draw_buf = lv_disp_draw_buf_create(
-        DISPLAY_WIDTH * 10,
-        draw_buf,
-        draw_buf + draw_buf_size / 2,
-        draw_buf_size / 2
-    );
+    disp_drv.draw_buf = &disp_buf;
     lv_disp_drv_register(&disp_drv);
     
     // Register touch driver

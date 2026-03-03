@@ -4,6 +4,7 @@
  */
 
 #include "core/secp256k1_wrapper.h"
+#include "core/ripemd160.h"
 #include "utils/memory.h"
 
 namespace SeedSigner {
@@ -155,10 +156,13 @@ void Secp256k1::hash256(const uint8_t* data, size_t len, uint8_t hash[32]) {
 }
 
 void Secp256k1::ripemd160(const uint8_t* data, size_t len, uint8_t hash[20]) {
-    // Placeholder - needs actual RIPEMD160 implementation
-    (void)data;
-    (void)len;
-    memset(hash, 0, 20);
+    RIPEMD160::hash(data, len, hash);
+}
+
+void Secp256k1::hash160(const uint8_t* data, size_t len, uint8_t hash[20]) {
+    uint8_t sha256_hash[32];
+    sha256(data, len, sha256_hash);
+    ripemd160(sha256_hash, 32, hash);
 }
 
 void Secp256k1::random_bytes(uint8_t* buf, size_t len) {

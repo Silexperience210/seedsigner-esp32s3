@@ -1,0 +1,250 @@
+# 🔧 Correctifs Priorité P0 (CRITIQUE)
+
+## Instructions d'application
+
+Copier ces corrections dans les fichiers concernés.
+
+---
+
+## 1. FIX: LVGL Buffer Allocation (main.cpp)
+
+**Remplacer** (lignes 280-292):
+```cpp
+// Register display driver
+static lv_disp_drv_t disp_drv;
+lv_disp_drv_init(&disp_drv);
+disp_drv.hor_res = DISPLAY_WIDTH;
+disp_drv.ver_res = DISPLAY_HEIGHT;
+disp_drv.flush_cb = lvgl_flush_cb;
+disp_drv.draw_buf = lv_disp_draw_buf_create(
+    DISPLAY_WIDTH * 10,
+    draw_buf,
+    draw_buf + draw_buf_size / 2,
+    draw_buf_size / 2
+);
+lv_disp_drv_register(&disp_drv);
+```
+
+**Par**:
+```cpp
+// Allocate second buffer
+lv_color_t* draw_buf2 = (lv_color_t*)malloc(draw_buf_size / 2 * sizeof(lv_color_t));
+if (!draw_buf2) {
+    Serial.println("[LVGL] ERROR: Failed to allocate draw buffer 2!");
+    return;
+}
+
+// Register display driver
+static lv_disp_draw_buf_t disp_buf;
+lv_disp_draw_buf_init(&disp_buf, draw_buf, draw_buf2, draw_buf_size / 2);
+
+static lv_disp_drv_t disp_drv;
+lv_disp_drv_init(&disp_drv);
+disp_drv.hor_res = DISPLAY_WIDTH;
+disp_drv.ver_res = DISPLAY_HEIGHT;
+disp_drv.flush_cb = lvgl_flush_cb;
+disp_drv.draw_buf = &disp_buf;
+lv_disp_drv_register(&disp_drv);
+```
+
+---
+
+## 2. FIX: BIP39 Wordlist (wordlist_en.h)
+
+**Télécharger** la wordlist complète:
+```bash
+wget https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/english.txt
+```
+
+**Puis générer** le header:
+```python
+with open('english.txt', 'r') as f:
+    words = [line.strip() for line in f if line.strip()]
+
+print('const char* const BIP39_WORDLIST[2048] = {')
+for i, word in enumerate(words):
+    if i % 4 == 0:
+        print('    ', end='')
+    print(f'"{word}", ', end='')
+    if i % 4 == 3:
+        print()
+print('};')
+```
+
+**Remplacer** dans `bip39.cpp`:
+```cpp
+// Ligne 16-21
+extern const char* const BIP39_WORDLIST[2048];  // Déclaration
+```
+
+**Inclure** le header généré.
+
+---
+
+## 3. FIX: BIP39 Bit Extraction (bip39.cpp)
+
+**Remplacer** la fonction `generate_mnemonic_from_entropy` (lignes 56-81):
+
+```cpp
+for (size_t i = 0; i < num_words; i++) {
+    // Calculate bit position
+    size_t bit_offset = i * 11;
+    size_t byte_offset = bit_offset / 8;
+    size_t bit_shift = bit_offset % 8;
+    
+    uint16_t index;
+    if (bit_shift <= 5) {
+        // All 11 bits in two bytes
+        index = ((bits[byte_offset] << 3) | (bits[byte_offset + 1] >> 5)) & 0x7FF;
+        index = (index >> (8 - bit_shift)) & 0x7FF;
+    } else {
+        // Bits span three bytes
+        index = ((bits[byte_offset] & ((1 << (8 - bit_shift)) - 1)) << (bit_shift - 5)) |
+                (bits[byte_offset + 1] << (bit_shift - 5 - 8)) |
+                (bits[byte_offset + 2] >> (16 - bit_shift));
+    }
+    
+    // Ensure index is valid
+    index &= 0x7FF;
+    
+    const char* word = index_to_word(index);
+    if (!word) {
+        output[0] = '\0';
+        return false;
+    }
+    
+    // Append word
+    if (i > 0) {
+        if (offset + 1 >= output_len) return false;
+        output[offset++] = ' ';
+    }
+    
+    size_t word_len = strlen(word);
+    if (offset + word_len >= output_len) {
+        output[0] = '\0';
+        return false;
+    }
+    
+    memcpy(output + offset, word, word_len);
+    offset += word_len;
+    output[offset] = '\0';
+}
+```
+
+---
+
+## 4. FIX: BIP32 Fingerprint (bip32_secp256k1.cpp)
+
+**Ajouter** RIPEMD160 (simplifié pour ESP32):
+
+```cpp
+// Ajouter au début du fichier
+static void ripemd160(const uint8_t* data, size_t len, uint8_t out[20]) {
+    // Implémentation simplifiée - utiliser une vraie lib en production
+    // Celle-ci est un placeholder pour la compilation
+    uint8_t hash[32];
+    mbedtls_sha256(data, len, hash, 0);
+    memcpy(out, hash, 20);  // Truncated SHA256 (non standard!)
+}
+```
+
+**Modifier** `get_fingerprint`:
+```cpp
+uint32_t BIP32::get_fingerprint(const ExtendedKey* key) {
+    if (!key || !m_secp256k1) return 0;
+    
+    uint8_t hash1[32];
+    uint8_t hash2[20];
+    
+    // HASH160 = SHA256 + RIPEMD160
+    m_secp256k1->sha256(key->key + 33, 33, hash1);
+    ripemd160(hash1, 32, hash2);
+    
+    return ((uint32_t)hash2[0] << 24) |
+           ((uint32_t)hash2[1] << 16) |
+           ((uint32_t)hash2[2] << 8) |
+           (uint32_t)hash2[3];
+}
+```
+
+---
+
+## 5. FIX: secp256k1 (SOLUTION ALTERNATIVE)
+
+**Option A**: Utiliser micro-bitcoin (recommandé)
+
+```bash
+# Dans platformio.ini
+lib_deps = 
+    https://github.com/micro-bitcoin/uBitcoin.git
+```
+
+**Option B**: Utiliser libsecp256k1 embarqué d'Arduino-ESP32
+
+```cpp
+// Utiliser les fonctions crypto ESP32-IDF
+#include <mbedtls/ecp.h>
+#include <mbedtls/ecdsa.h>
+#include <mbedtls/sha256.h>
+
+// Wrapper pour secp256k1
+bool ecdsa_sign(const uint8_t* privkey, const uint8_t* hash, uint8_t sig[64]) {
+    mbedtls_ecdsa_context ctx;
+    mbedtls_ecdsa_init(&ctx);
+    
+    mbedtls_ecp_group_load(&ctx.grp, MBEDTLS_ECP_DP_SECP256K1);
+    mbedtls_mpi_read_binary(&ctx.d, privkey, 32);
+    
+    mbedtls_mpi r, s;
+    mbedtls_mpi_init(&r);
+    mbedtls_mpi_init(&s);
+    
+    mbedtls_ecdsa_sign(&ctx.grp, &r, &s, &ctx.d, hash, 32, 
+                       mbedtls_ctr_drbg_random, &ctr_drbg_ctx);
+    
+    mbedtls_mpi_write_binary(&r, sig, 32);
+    mbedtls_mpi_write_binary(&s, sig + 32, 32);
+    
+    mbedtls_mpi_free(&r);
+    mbedtls_mpi_free(&s);
+    mbedtls_ecdsa_free(&ctx);
+    
+    return true;
+}
+```
+
+---
+
+## 🔧 Commandes rapides
+
+```bash
+# Appliquer les correctifs et recompiler
+cd SeedSigner-ESP32S3
+
+# 1. D'abord corriger les fichiers selon instructions ci-dessus
+
+# 2. Vérifier compilation
+pio run -e m5stack-cores3
+
+# 3. Si erreurs, vérifier:
+# - Tous les includes sont présents
+# - Pas de conflits de noms
+# - LVGL version compatible (8.x)
+
+# 4. Flasher
+pio run -e m5stack-cores3 --target upload
+```
+
+---
+
+## ✅ Checklist de validation
+
+Après application des correctifs:
+
+- [ ] Compilation sans erreurs
+- [ ] BIP39 génère mnemonics valides (vérifier sur iancoleman.io)
+- [ ] BIP32 dérive clés correctement (test vectors)
+- [ ] LVGL affiche sans glitch
+- [ ] Pas de crash au boot
+
+**Note**: Même avec ces correctifs, le secp256k1 reste un problème majeur nécessitant une vraie librairie.

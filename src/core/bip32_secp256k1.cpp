@@ -6,6 +6,7 @@
 
 #include "core/bip32.h"
 #include "core/secp256k1_wrapper.h"
+#include "core/ripemd160.h"
 #include "utils/memory.h"
 #include <string.h>
 #include <mbedtls/sha256.h>
@@ -199,17 +200,23 @@ bool BIP32::get_public_key(const ExtendedKey* priv_key, ExtendedKey* pub_key) {
 }
 
 uint32_t BIP32::get_fingerprint(const ExtendedKey* key) {
-    if (!key) return 0;
+    if (!key || !m_secp256k1) return 0;
     
     // Fingerprint is first 4 bytes of HASH160(public_key)
-    // For simplicity, use first 4 bytes of SHA256(public_key)
-    uint8_t hash[32];
-    m_secp256k1->hash256(key->key + 33, 33, hash);
+    // HASH160 = SHA256 + RIPEMD160
+    uint8_t sha256_hash[32];
+    uint8_t ripemd160_hash[20];
     
-    return ((uint32_t)hash[0] << 24) |
-           ((uint32_t)hash[1] << 16) |
-           ((uint32_t)hash[2] << 8) |
-           (uint32_t)hash[3];
+    // First SHA256
+    m_secp256k1->sha256(key->key + 33, 33, sha256_hash);
+    
+    // Then RIPEMD160
+    RIPEMD160::hash(sha256_hash, 32, ripemd160_hash);
+    
+    return ((uint32_t)ripemd160_hash[0] << 24) |
+           ((uint32_t)ripemd160_hash[1] << 16) |
+           ((uint32_t)ripemd160_hash[2] << 8) |
+           (uint32_t)ripemd160_hash[3];
 }
 
 static bool base58_encode(const uint8_t* data, size_t len, char* output, size_t output_len) {

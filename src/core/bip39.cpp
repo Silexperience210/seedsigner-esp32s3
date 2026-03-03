@@ -4,6 +4,7 @@
  */
 
 #include "core/bip39.h"
+#include "core/bip39_wordlist.h"
 #include "utils/memory.h"
 #include <string.h>
 #include <mbedtls/sha256.h>
@@ -12,13 +13,8 @@
 namespace SeedSigner {
 namespace Core {
 
-// English wordlist (first 20 words as example, full list would be embedded)
-const char* BIP39::s_wordlist[2048] = {
-    "abandon", "ability", "able", "about", "above", "absent", 
-    "absorb", "abstract", "absurd", "abuse", "access", "accident",
-    // ... full wordlist would be here
-    "zoo", "zoom"
-};
+// Use the complete wordlist from bip39_wordlist.h
+const char* const* BIP39::s_wordlist = BIP39_WORDLIST;
 
 BIP39::BIP39() {}
 
@@ -54,27 +50,52 @@ bool BIP39::generate_mnemonic_from_entropy(const uint8_t* entropy,
     size_t offset = 0;
     
     for (size_t i = 0; i < num_words; i++) {
-        // Extract 11 bits for word index
-        size_t bit_pos = i * 11;
-        size_t byte_pos = bit_pos / 8;
-        size_t bit_offset = bit_pos % 8;
+        // Calculate bit position for this word (11 bits per word)
+        size_t bit_offset = i * 11;
+        size_t byte_offset = bit_offset / 8;
+        size_t bit_shift = bit_offset % 8;
         
-        uint16_t index = 0;
-        index = ((bits[byte_pos] << bit_offset) | 
-                 (bits[byte_pos + 1] >> (8 - bit_offset))) >> (8 - bit_offset);
-        index &= 0x07FF;
+        uint16_t index;
+        
+        // Extract 11 bits from the entropy+checksum buffer
+        if (bit_shift <= 5) {
+            // All 11 bits are within two bytes
+            index = ((bits[byte_offset] << (8 - bit_shift)) | 
+                     (bits[byte_offset + 1] >> bit_shift)) & 0x07FF;
+            index = (index >> (8 - bit_shift));
+            if (bit_shift > 0) {
+                index = ((bits[byte_offset] & ((1 << (8 - bit_shift)) - 1)) << (bit_shift + 3)) |
+                        (bits[byte_offset + 1] >> (5 - bit_shift));
+            } else {
+                index = ((bits[byte_offset] << 3) | (bits[byte_offset + 1] >> 5)) & 0x07FF;
+            }
+        } else {
+            // 11 bits span three bytes
+            index = ((bits[byte_offset] & ((1 << (8 - bit_shift)) - 1)) << (bit_shift - 5)) |
+                    (bits[byte_offset + 1] << (bit_shift - 5 - 8)) |
+                    (bits[byte_offset + 2] >> (16 - bit_shift));
+        }
+        
+        index &= 0x07FF;  // Ensure 11-bit value
         
         const char* word = index_to_word(index);
-        if (!word) return false;
+        if (!word) {
+            output[0] = '\0';
+            return false;
+        }
         
         size_t word_len = strlen(word);
-        if (offset + word_len + 1 >= output_len) return false;
+        if (offset + word_len + (i > 0 ? 1 : 0) >= output_len) {
+            output[0] = '\0';
+            return false;
+        }
         
         if (i > 0) {
             output[offset++] = ' ';
         }
-        strcpy(output + offset, word);
+        memcpy(output + offset, word, word_len);
         offset += word_len;
+        output[offset] = '\0';
     }
     
     return true;

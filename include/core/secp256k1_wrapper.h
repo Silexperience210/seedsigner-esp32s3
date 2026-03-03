@@ -57,6 +57,9 @@ public:
     static void hash256(const uint8_t* data, size_t len, uint8_t hash[32]);
     static void ripemd160(const uint8_t* data, size_t len, uint8_t hash[20]);
     
+    // HASH160 = SHA256 + RIPEMD160 (used for Bitcoin addresses)
+    static void hash160(const uint8_t* data, size_t len, uint8_t hash[20]);
+    
     // Utility
     static void random_bytes(uint8_t* buf, size_t len);
     
