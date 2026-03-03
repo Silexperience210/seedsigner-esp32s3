@@ -1,0 +1,26 @@
+# PlatformIO
+.pio/
+.vscode/
+*.elf
+*.bin
+*.hex
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+*.log
+*.bak
+
+# IDE
+.idea/
+*.swp
+*.swo
