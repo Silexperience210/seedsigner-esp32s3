@@ -23,17 +23,42 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.11'
+    
+    - name: Cache PlatformIO
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.platformio/.cache
+          ~/.platformio/packages
+          ~/.platformio/platforms
+        key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
+        restore-keys: |
+          ${{ runner.os }}-pio-
     
     - name: Install PlatformIO
       run: |
         pip install platformio
-        pio platform install espressif32
+        pio --version
+    
+    - name: Check Files
+      run: |
+        echo "=== Project files ==="
+        ls -la
+        echo "=== PlatformIO.ini ==="
+        cat platformio.ini
+        echo "=== Partitions ==="
+        cat partitions_custom.csv
     
     - name: Build Firmware
+      run: pio run --verbose
+      env:
+        PLATFORMIO_BUILD_FLAGS: ""
+    
+    - name: Check Build Output
       run: |
-        export PLATFORMIO_BUILD_FLAGS=""
-        pio run
+        echo "=== Build output ==="
+        ls -la .pio/build/esp32-s3/
     
     - name: Prepare Web Files
       run: |
@@ -43,6 +68,8 @@ jobs:
         cp .pio/build/esp32-s3/firmware.bin _site/seedsigner-esp32s3.bin
         cp web/index.html _site/
         cp web/manifest.json _site/
+        echo "=== Web files ==="
+        ls -la _site/
     
     - name: Upload Pages Artifact
       uses: actions/upload-pages-artifact@v3
