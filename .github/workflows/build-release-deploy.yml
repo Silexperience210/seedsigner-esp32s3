@@ -3,16 +3,9 @@ name: Build and Deploy
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
+  contents: write
 
 jobs:
   build:
@@ -25,49 +18,24 @@ jobs:
       with:
         python-version: '3.11'
     
-    - name: Cache PlatformIO
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.platformio/.cache
-          ~/.platformio/packages
-          ~/.platformio/platforms
-        key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
-        restore-keys: |
-          ${{ runner.os }}-pio-
-    
     - name: Install PlatformIO
       run: |
         pip install platformio
-        pio --version
+        pio platform install espressif32 --with-package=framework-arduinoespressif32
     
-    - name: Build Firmware
+    - name: Build
       run: pio run
-      env:
-        PLATFORMIO_BUILD_FLAGS: ""
     
-    - name: Prepare Web Files
+    - name: Prepare web
       run: |
-        mkdir -p _site
-        cp .pio/build/esp32-s3/bootloader.bin _site/bootloader.bin
-        cp .pio/build/esp32-s3/partitions.bin _site/partition-table.bin
-        cp .pio/build/esp32-s3/firmware.bin _site/seedsigner-esp32s3.bin
-        cp web/index.html _site/
-        cp web/manifest.json _site/
-        ls -la _site/
+        mkdir web_deploy
+        cp .pio/build/esp32-s3/bootloader.bin web_deploy/
+        cp .pio/build/esp32-s3/partitions.bin web_deploy/partition-table.bin
+        cp .pio/build/esp32-s3/firmware.bin web_deploy/seedsigner-esp32s3.bin
+        cp web/* web_deploy/
     
-    - name: Upload Pages Artifact
-      uses: actions/upload-pages-artifact@v4
+    - name: Deploy
+      uses: peaceiris/actions-gh-pages@v3
       with:
-        path: _site/
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./web_deploy
