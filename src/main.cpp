@@ -17,9 +17,6 @@
 #include <M5Unified.h>
 #include <lvgl.h>
 #include <WiFi.h>
-#include <esp_timer.h>
-#include <esp_heap_caps.h>
-#include <esp_psram.h>
 
 // Core crypto
 #include "core/hardware_rng.h"
@@ -178,19 +175,6 @@ void setup_hardware() {
 void setup() {
     Serial.begin(115200);
     delay(1000);
-    
-    // Initialize PSRAM first
-    Serial.println("Initializing PSRAM...");
-    if (psramFound()) {
-        size_t psram_size = ESP.getPsramSize();
-        size_t free_psram = ESP.getFreePsram();
-        Serial.printf("PSRAM: %d KB total, %d KB free\n", psram_size / 1024, free_psram / 1024);
-        
-        // Configure memory to prefer PSRAM
-        heap_caps_malloc_extmem_enable(1024);  // Allocations > 1KB go to PSRAM
-    } else {
-        Serial.println("WARNING: PSRAM not found!");
-    }
     
     Serial.println("\n\n");
     Serial.println("╔══════════════════════════════════════════════════╗");
