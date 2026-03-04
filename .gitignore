@@ -8,19 +8,20 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Temp files
-*.tmp
-*.log
-*.bak
+# Build artifacts (générés automatiquement)
+build/
+out/
+dist/
 
 # IDE
 .idea/
 *.swp
 *.swo
+
+# Docs folder (généré par CI)
+docs/
