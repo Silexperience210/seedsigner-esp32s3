@@ -4,12 +4,17 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     
     - name: Setup Python
       uses: actions/setup-python@v5
@@ -24,7 +29,7 @@ jobs:
     - name: Build Firmware
       run: pio run
     
-    - name: Copy files to docs
+    - name: Prepare docs folder
       run: |
         mkdir -p docs
         cp .pio/build/esp32-s3/bootloader.bin docs/
@@ -32,9 +37,12 @@ jobs:
         cp .pio/build/esp32-s3/firmware.bin docs/seedsigner-esp32s3.bin
         cp web/index.html docs/
         cp web/manifest.json docs/
+        ls -la docs/
     
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs
+        force_orphan: true
