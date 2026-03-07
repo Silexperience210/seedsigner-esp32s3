@@ -46,7 +46,7 @@ void create_seed_display_screen(App* app, const char* mnemonic) {
     // Title
     lv_obj_t* title = lv_label_create(screen);
     lv_label_set_text(title, "Recovery Phrase");
-    lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xF7931A), 0);
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
     
@@ -105,7 +105,7 @@ void create_seed_menu_screen(App* app) {
     // Title
     lv_obj_t* title = lv_label_create(screen);
     lv_label_set_text(title, "Seed Management");
-    lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xF7931A), 0);
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 20);
     

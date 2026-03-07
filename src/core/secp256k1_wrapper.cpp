@@ -67,23 +67,22 @@ bool Secp256k1::sign(const uint8_t private_key[32],
     if (!m_initialized || !private_key || !hash || !signature) return false;
     
     secp256k1_ecdsa_signature sig;
+    uint8_t recid_local = 0;
     
     if (recid) {
-        if (!secp256k1_ecdsa_sign_recoverable(m_ctx, &sig, hash, private_key, nullptr, nullptr)) {
+        // Use recoverable signature mode
+        if (!secp256k1_ecdsa_sign_recoverable(m_ctx, &sig, &recid_local, hash, private_key, nullptr)) {
             return false;
         }
-        int recid_int;
-        if (!secp256k1_ecdsa_recoverable_signature_serialize_compact(m_ctx, signature, &recid_int, &sig)) {
-            return false;
-        }
-        *recid = (uint8_t)recid_int;
+        *recid = recid_local;
     } else {
-        if (!secp256k1_ecdsa_sign(m_ctx, &sig, hash, private_key, nullptr, nullptr)) {
+        if (!secp256k1_ecdsa_sign(m_ctx, &sig, hash, private_key, nullptr)) {
             return false;
         }
-        if (!secp256k1_ecdsa_signature_serialize_compact(m_ctx, signature, &sig)) {
-            return false;
-        }
+    }
+    
+    if (!secp256k1_ecdsa_signature_serialize_compact(m_ctx, signature, &sig)) {
+        return false;
     }
     
     return true;
@@ -128,17 +127,17 @@ bool Secp256k1::scalar_multiply(const uint8_t scalar[32],
 }
 
 bool Secp256k1::seckey_verify(const uint8_t seckey[32]) {
-    if (!m_initialized || !seckey) return false;
-    return secp256k1_ec_seckey_verify(m_ctx, seckey) == 1;
+    if (!seckey) return false;
+    return secp256k1_ec_seckey_verify(seckey) == 1;
 }
 
 bool Secp256k1::seckey_tweak_add(uint8_t seckey[32], const uint8_t tweak[32]) {
-    if (!m_initialized || !seckey || !tweak) return false;
+    if (!seckey || !tweak) return false;
     return secp256k1_ec_privkey_tweak_add(seckey, tweak) == 1;
 }
 
 bool Secp256k1::seckey_tweak_mul(uint8_t seckey[32], const uint8_t tweak[32]) {
-    if (!m_initialized || !seckey || !tweak) return false;
+    if (!seckey || !tweak) return false;
     return secp256k1_ec_privkey_tweak_mul(seckey, tweak) == 1;
 }
 

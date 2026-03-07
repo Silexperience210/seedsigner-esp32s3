@@ -34,6 +34,7 @@ enum class NFCAuthStatus {
 // NTAG 424 tag info
 struct NTAG424Tag {
     uint8_t uid[NTAG424_UID_SIZE];
+    uint8_t uid_len;
     uint8_t version[7];
     uint16_t memory_size;
     NFCAuthStatus auth_status;
@@ -113,6 +114,14 @@ private:
     
     // PN532 interface
     void* m_pn532;  // Opaque PN532 handle
+    
+    // PN532 low-level interface
+    bool pn532_send_command(const uint8_t* cmd, size_t cmd_len, 
+                            uint8_t* response, size_t* response_len);
+    bool pn532_get_firmware_version(uint8_t version[4]);
+    bool pn532_sam_configuration();
+    bool pn532_in_list_passive_target(uint8_t* uid, uint8_t* uid_len,
+                                      uint8_t* atqa, uint8_t* sak);
     
     // Low-level NTAG 424 commands
     bool ntag424_read_version(uint8_t* version);

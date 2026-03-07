@@ -69,14 +69,14 @@ bool Camera::init() {
 
     esp_err_t err = esp_camera_init(&config);
     if (err != ESP_OK) {
-        M5_LOG_E("Camera init failed: 0x%x", err);
+        M5_LOGE("Camera init failed: 0x%x", err);
         return false;
     }
 
     m_initialized = true;
     m_resolution = CameraResolution::QVGA;
     
-    M5_LOG_I("Camera initialized successfully");
+    M5_LOGI("Camera initialized successfully");
     return true;
 }
 
@@ -124,7 +124,7 @@ bool Camera::capture(CameraFrame* frame) {
 
     camera_fb_t* fb = esp_camera_fb_get();
     if (!fb) {
-        M5_LOG_E("Camera capture failed");
+        M5_LOGE("Camera capture failed");
         return false;
     }
 

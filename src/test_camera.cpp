@@ -38,7 +38,7 @@ void test_camera_init() {
             
             // Release framebuffer
             if (frame._fb) {
-                esp_camera_fb_return((camera_fb_t*)frame._fb);
+                // Frame cleanup handled by CameraFrame destructor
                 frame._fb = nullptr;
             }
         } else {
@@ -62,7 +62,7 @@ void test_qr_generation() {
     const char* test_data = "bitcoin:bc1q...";
     
     Serial.print("Generating QR code... ");
-    if (qr_gen.generate(test_data, &qr, Utils::QRErrorLevel::MEDIUM)) {
+    if (qr_gen.generate(test_data, &qr, Utils::QRErrorLevel::QR_MEDIUM)) {
         Serial.println("PASS");
         Serial.printf("  Version: %d\n", qr.version);
         Serial.printf("  Size: %dx%d modules\n", qr.size, qr.size);
@@ -121,7 +121,7 @@ void test_camera_entropy() {
         
         // Release framebuffer
         if (frame._fb) {
-            esp_camera_fb_return((camera_fb_t*)frame._fb);
+            // Frame cleanup handled by CameraFrame destructor
         }
     }
     
@@ -162,7 +162,7 @@ void test_qr_scan() {
             
             // Release framebuffer
             if (frame._fb) {
-                esp_camera_fb_return((camera_fb_t*)frame._fb);
+                // Frame cleanup handled by CameraFrame destructor
             }
         }
         delay(100);

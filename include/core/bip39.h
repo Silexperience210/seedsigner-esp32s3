@@ -35,7 +35,7 @@ public:
     bool self_test();
     
 private:
-    static const char* s_wordlist[2048];
+    static const char* const* s_wordlist;
     int find_word(const char* word);
     bool pbkdf2_hmac_sha512(const uint8_t* password, size_t password_len,
                             const uint8_t* salt, size_t salt_len,

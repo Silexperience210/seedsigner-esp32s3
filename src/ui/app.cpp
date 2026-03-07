@@ -103,7 +103,7 @@ void App::create_main_menu() {
     // Title
     lv_obj_t* title = lv_label_create(screen);
     lv_label_set_text(title, "SeedSigner");
-    lv_obj_set_style_text_font(title, &lv_font_montserrat_28, 0);
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(title, SS_ORANGE, 0);
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 20);
     

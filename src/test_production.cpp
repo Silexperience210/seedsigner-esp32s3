@@ -9,6 +9,7 @@
  */
 
 #include <Arduino.h>
+#include <mbedtls/sha256.h>
 #include "core/bip39.h"
 #include "core/bip32.h"
 #include "core/secp256k1_wrapper.h"

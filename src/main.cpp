@@ -47,6 +47,8 @@
 // Test functions
 extern "C" void run_all_tests();
 
+using namespace SeedSigner;
+
 // ============================================
 // Configuration & Constants
 // ============================================
@@ -69,11 +71,11 @@ static const char* TAG = "SeedSigner";
 UI::App* g_app = nullptr;
 
 // Hardware drivers
-Drivers::Display* g_display = nullptr;
-Drivers::Camera* g_camera = nullptr;
-Drivers::NFC* g_nfc = nullptr;
-Drivers::Touch* g_touch = nullptr;
-Drivers::SDCard* g_sd = nullptr;
+SeedSigner::Drivers::Display* g_display = nullptr;
+SeedSigner::Drivers::Camera* g_camera = nullptr;
+SeedSigner::Drivers::NFC* g_nfc = nullptr;
+SeedSigner::Drivers::Touch* g_touch = nullptr;
+SeedSigner::Drivers::SDCard* g_sd = nullptr;
 
 // Security state
 static volatile bool g_security_lockdown = false;
@@ -349,7 +351,6 @@ void setup_hardware() {
     #ifdef M5STACK_CORES3
     auto cfg = M5.config();
     cfg.external_display.module_display = true;
-    cfg.external_display.module_gyro = true;
     cfg.external_display.module_rca = false;
     cfg.internal_spk = false;  // Disable speaker for security
     cfg.internal_mic = false;  // Disable microphone for security
@@ -431,8 +432,8 @@ void setup_lvgl() {
     indev_drv.read_cb = lvgl_read_cb;
     lv_indev_drv_register(&indev_drv);
     
-    // Set tick source
-    lv_tick_set_cb(lvgl_tick_cb);
+    // Note: lv_tick_inc() should be called periodically in timer interrupt
+    // For now, LVGL will use default millisecond counting
     
     Serial.println("[LVGL] LVGL initialized");
 }
@@ -445,31 +446,31 @@ void setup_drivers() {
     Serial.println("[DRIVERS] Initializing drivers...");
     
     // Display driver
-    g_display = new Drivers::Display();
+    g_display = new SeedSigner::Drivers::Display();
     if (!g_display->init()) {
         Serial.println("[DRIVERS] WARNING: Display init failed!");
     }
     
     // Touch driver
-    g_touch = new Drivers::Touch();
+    g_touch = new SeedSigner::Drivers::Touch();
     if (!g_touch->init()) {
         Serial.println("[DRIVERS] WARNING: Touch init failed!");
     }
     
     // Camera driver
-    g_camera = new Drivers::Camera();
+    g_camera = new SeedSigner::Drivers::Camera();
     if (!g_camera->init()) {
         Serial.println("[DRIVERS] WARNING: Camera init failed (non-critical)");
     }
     
     // NFC driver
-    g_nfc = new Drivers::NFC();
+    g_nfc = new SeedSigner::Drivers::NFC();
     if (!g_nfc->init()) {
         Serial.println("[DRIVERS] WARNING: NFC init failed (non-critical)");
     }
     
     // SD Card driver
-    g_sd = new Drivers::SDCard();
+    g_sd = new SeedSigner::Drivers::SDCard();
     if (!g_sd->init()) {
         Serial.println("[DRIVERS] WARNING: SD Card init failed (non-critical)");
     }

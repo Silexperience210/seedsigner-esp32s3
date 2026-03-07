@@ -16,7 +16,7 @@ void show_splash_screen() {
     // Logo/title
     lv_obj_t* title = lv_label_create(screen);
     lv_label_set_text(title, "SeedSigner");
-    lv_obj_set_style_text_font(title, &lv_font_montserrat_32, 0);
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xF7931A), 0);
     lv_obj_align(title, LV_ALIGN_CENTER, 0, -40);
     
@@ -42,7 +42,7 @@ void show_splash_screen() {
     lv_obj_t* notice = lv_label_create(screen);
     lv_label_set_text(notice, "Air-gapped • Stateless • Open Source");
     lv_obj_set_style_text_color(notice, lv_color_hex(0x00AA00), 0);
-    lv_obj_set_style_text_font(notice, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_font(notice, &lv_font_montserrat_14, 0);
     lv_obj_align(notice, LV_ALIGN_BOTTOM_MID, 0, -5);
     
     lv_scr_load(screen);
@@ -59,14 +59,14 @@ void show_security_warning() {
     // Warning icon
     lv_obj_t* icon = lv_label_create(screen);
     lv_label_set_text(icon, LV_SYMBOL_WARNING);
-    lv_obj_set_style_text_font(icon, &lv_font_montserrat_48, 0);
+    lv_obj_set_style_text_font(icon, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(icon, lv_color_hex(0xFFAA00), 0);
     lv_obj_align(icon, LV_ALIGN_TOP_MID, 0, 30);
     
     // Title
     lv_obj_t* title = lv_label_create(screen);
     lv_label_set_text(title, "Security Notice");
-    lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xFFAA00), 0);
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 90);
     
@@ -99,7 +99,7 @@ void show_security_warning() {
         if (M5.Touch.getCount() > 0) {
             lv_indev_t* indev = lv_indev_get_next(NULL);
             lv_indev_data_t data;
-            lv_indev_read(indev, &data);
+            _lv_indev_read(indev, &data);
             if (data.state == LV_INDEV_STATE_PRESSED) {
                 pressed = true;
             }

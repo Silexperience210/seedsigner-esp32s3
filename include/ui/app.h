@@ -113,7 +113,9 @@ private:
     void create_seed_display_screen();
     void create_sign_scan_screen();
     void create_sign_review_screen();
+    void create_sign_confirm_screen();
     void create_settings_screen();
+    void create_tools_menu_screen();
     void create_nfc_screen();
     
     // State transition handlers
@@ -136,7 +138,6 @@ private:
     // Auto-lock
     uint32_t m_last_activity;
     void check_auto_lock();
-    void reset_activity_timer();
 };
 
 } // namespace UI

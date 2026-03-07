@@ -54,7 +54,7 @@ namespace UI {
 
 // Header
 #define SS_HEADER_HEIGHT        30
-#define SS_HEADER_FONT          &lv_font_montserrat_16
+#define SS_HEADER_FONT          &lv_font_montserrat_14
 
 // Footer
 #define SS_FOOTER_HEIGHT        25
@@ -65,11 +65,11 @@ namespace UI {
 #define SS_BUTTON_FONT          &lv_font_montserrat_14
 
 // Text
-#define SS_FONT_SMALL           &lv_font_montserrat_12
+#define SS_FONT_SMALL           &lv_font_montserrat_14
 #define SS_FONT_MEDIUM          &lv_font_montserrat_14
-#define SS_FONT_LARGE           &lv_font_montserrat_16
-#define SS_FONT_XLARGE          &lv_font_montserrat_20
-#define SS_FONT_MNEMONIC        &lv_font_montserrat_16  // Should be monospace
+#define SS_FONT_LARGE           &lv_font_montserrat_14
+#define SS_FONT_XLARGE          &lv_font_montserrat_14
+#define SS_FONT_MNEMONIC        &lv_font_montserrat_14  // Should be monospace
 
 // QR Code
 #define SS_QR_SIZE              180

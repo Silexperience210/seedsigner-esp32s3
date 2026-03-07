@@ -18,7 +18,7 @@ void create_settings_screen(App* app) {
     // Title
     lv_obj_t* title = lv_label_create(screen);
     lv_label_set_text(title, "Settings");
-    lv_obj_set_style_text_font(title, &lv_font_montserrat_28, 0);
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xF7931A), 0);
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 20);
     
@@ -57,7 +57,7 @@ void create_settings_screen(App* app) {
     lv_obj_set_flex_grow(lbl_lock, 1);
     
     lv_obj_t* sw_lock = lv_switch_create(cont_lock);
-    lv_obj_set_state(sw_lock, LV_STATE_CHECKED, true);
+    lv_obj_add_state(sw_lock, LV_STATE_CHECKED);
     
     // Test camera button
     lv_obj_t* btn_cam = lv_btn_create(cont);
@@ -120,14 +120,14 @@ void create_settings_screen(App* app) {
 }
 
 // Tools menu screen
-void create_tools_menu_screen(App* {
+void create_tools_menu_screen(App* app) {
     lv_obj_t* screen = lv_obj_create(NULL);
     lv_obj_set_style_bg_color(screen, lv_color_hex(0x1A1A1A), 0);
     
     // Title
     lv_obj_t* title = lv_label_create(screen);
     lv_label_set_text(title, "Tools");
-    lv_obj_set_style_text_font(title, &lv_font_montserrat_28, 0);
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(title, lv_color_hex(0xF7931A), 0);
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 20);
     

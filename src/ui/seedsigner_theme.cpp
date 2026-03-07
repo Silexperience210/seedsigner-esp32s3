@@ -250,8 +250,8 @@ lv_obj_t* SeedSignerTheme::create_button(lv_obj_t* parent, const char* text,
     lv_obj_t* btn = lv_btn_create(parent);
     lv_obj_set_size(btn, SS_BUTTON_WIDTH, SS_BUTTON_HEIGHT);
     lv_obj_set_pos(btn, x, y);
-    lv_obj_add_style(btn, &s_style_button, 0);
-    lv_obj_add_style(btn, &s_style_button_pressed, LV_STATE_PRESSED);
+    lv_obj_add_style(btn, SeedSignerTheme::get_style_button(), 0);
+    lv_obj_add_style(btn, SeedSignerTheme::get_style_button_pressed(), LV_STATE_PRESSED);
     
     lv_obj_t* label = lv_label_create(btn);
     lv_label_set_text(label, text);
@@ -270,12 +270,12 @@ lv_obj_t* SeedSignerTheme::create_icon_button(lv_obj_t* parent, const char* icon
     lv_obj_t* btn = lv_btn_create(parent);
     lv_obj_set_size(btn, 40, 40);
     lv_obj_set_pos(btn, x, y);
-    lv_obj_add_style(btn, &s_style_button, 0);
-    lv_obj_add_style(btn, &s_style_button_pressed, LV_STATE_PRESSED);
+    lv_obj_add_style(btn, SeedSignerTheme::get_style_button(), 0);
+    lv_obj_add_style(btn, SeedSignerTheme::get_style_button_pressed(), LV_STATE_PRESSED);
     
     lv_obj_t* label = lv_label_create(btn);
     lv_label_set_text(label, icon);
-    lv_obj_set_style_text_font(label, &lv_font_montserrat_20, 0);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_14, 0);
     lv_obj_center(label);
     
     if (cb) {
@@ -321,8 +321,8 @@ void SeedSignerUI::show_back_button(lv_obj_t* parent, lv_event_cb_t cb, void* us
     lv_obj_t* btn = lv_btn_create(parent);
     lv_obj_set_size(btn, 60, 30);
     lv_obj_align(btn, LV_ALIGN_BOTTOM_LEFT, 10, -10);
-    lv_obj_add_style(btn, &s_style_button, 0);
-    lv_obj_add_style(btn, &s_style_button_pressed, LV_STATE_PRESSED);
+    lv_obj_add_style(btn, SeedSignerTheme::get_style_button(), 0);
+    lv_obj_add_style(btn, SeedSignerTheme::get_style_button_pressed(), LV_STATE_PRESSED);
     
     lv_obj_t* label = lv_label_create(btn);
     lv_label_set_text(label, "< Back");
@@ -339,8 +339,8 @@ void SeedSignerUI::show_confirm_button(lv_obj_t* parent, const char* text,
     lv_obj_t* btn = lv_btn_create(parent);
     lv_obj_set_size(btn, 80, 30);
     lv_obj_align(btn, LV_ALIGN_BOTTOM_RIGHT, -10, -10);
-    lv_obj_add_style(btn, &s_style_button, 0);
-    lv_obj_add_style(btn, &s_style_button_pressed, LV_STATE_PRESSED);
+    lv_obj_add_style(btn, SeedSignerTheme::get_style_button(), 0);
+    lv_obj_add_style(btn, SeedSignerTheme::get_style_button_pressed(), LV_STATE_PRESSED);
     
     lv_obj_t* label = lv_label_create(btn);
     lv_label_set_text(label, text);

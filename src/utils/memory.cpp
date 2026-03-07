@@ -21,7 +21,7 @@ bool SecureMemory::s_initialized = false;
 uint8_t* SecureMemory::s_pool = nullptr;
 size_t SecureMemory::s_pool_size = 0;
 size_t SecureMemory::s_used = 0;
-SecureMemory::Allocation SecureMemory::s_allocations[MAX_ALLOCATIONS];
+Allocation SecureMemory::s_allocations[MAX_ALLOCATIONS];
 uint32_t SecureMemory::s_alloc_count = 0;
 
 // Guard pattern for overflow detection

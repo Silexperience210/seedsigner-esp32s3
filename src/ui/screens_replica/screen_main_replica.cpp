@@ -26,7 +26,7 @@ void create_main_menu_replica(App* app) {
     lv_obj_t* title = lv_label_create(header);
     lv_label_set_text(title, "SeedSigner");
     lv_obj_set_style_text_color(title, SS_COLOR_ORANGE, 0);
-    lv_obj_set_style_text_font(title, &lv_font_montserrat_18, 0);
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_14, 0);
     lv_obj_center(title);
     
     // Subtitle

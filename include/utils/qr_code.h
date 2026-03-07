@@ -27,10 +27,10 @@ enum class QREncodeMode {
 
 // QR Error correction levels
 enum class QRErrorLevel {
-    LOW = 0,       // ~7%
-    MEDIUM,        // ~15%
-    QUARTILE,      // ~25%
-    HIGH           // ~30%
+    QR_LOW = 0,       // ~7%
+    QR_MEDIUM,        // ~15%
+    QR_QUARTILE,      // ~25%
+    QR_HIGH           // ~30%
 };
 
 // QR Code structure
@@ -50,7 +50,7 @@ public:
     
     // Generate QR code from string
     bool generate(const char* data, QRCode* qr, 
-                  QRErrorLevel ec = QRErrorLevel::MEDIUM);
+                  QRErrorLevel ec = QRErrorLevel::QR_MEDIUM);
     
     // Generate with specific version constraint
     bool generate_version(const char* data, uint8_t version,
@@ -138,6 +138,15 @@ private:
     
     // quirc handle (opaque pointer)
     void* m_quirc;
+    
+    // QR processing methods
+    bool find_finder_patterns(const uint8_t* image, uint16_t w, uint16_t h,
+                              int16_t* fx1, int16_t* fy1,
+                              int16_t* fx2, int16_t* fy2,
+                              int16_t* fx3, int16_t* fy3);
+    bool sample_qr_grid(const uint8_t* image, uint16_t w, uint16_t h,
+                        const int16_t* corners, QRCode* qr);
+    bool decode_qr(const QRCode* qr, char* output, size_t output_len);
     
     // Legacy stub implementations (if quirc not available)
     bool find_finder_patterns_stub(const uint8_t* image, uint16_t w, uint16_t h);

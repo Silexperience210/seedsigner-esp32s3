@@ -62,8 +62,15 @@ public:
     // Fingerprint calculation
     uint32_t get_fingerprint(const ExtendedKey* key);
     
+    // Address type
+    enum class AddressType {
+        P2WPKH_NATIVE,  // Native SegWit v0 (Bech32) - bc1q...
+        P2TR            // Taproot v1 (Bech32m) - bc1p...
+    };
+    
     // Address generation
-    bool get_address(const ExtendedKey* key, char* address, size_t addr_len);
+    bool get_address(const ExtendedKey* key, char* address, size_t addr_len,
+                     bool testnet = false, AddressType addr_type = AddressType::P2WPKH_NATIVE);
     
     // Signing
     bool sign(const ExtendedKey* key, const uint8_t hash[32], 
@@ -78,6 +85,9 @@ private:
     ExtendedKey m_master;
     ExtendedKey m_current;
     bool m_initialized;
+    
+    // Secp256k1 context for crypto operations
+    class Secp256k1* m_secp256k1;
     
     // HMAC-SHA512
     void hmac_sha512(const uint8_t* key, size_t key_len,

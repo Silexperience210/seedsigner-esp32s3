@@ -30,10 +30,10 @@ bool QRCodeGenerator::generate(const char* data, QRCode* qr, QRErrorLevel ec) {
     // Map error level
     uint8_t ecc = 0;
     switch (ec) {
-        case QRErrorLevel::LOW: ecc = 0; break;
-        case QRErrorLevel::MEDIUM: ecc = 1; break;
-        case QRErrorLevel::QUARTILE: ecc = 2; break;
-        case QRErrorLevel::HIGH: ecc = 3; break;
+        case QRErrorLevel::QR_LOW: ecc = 0; break;
+        case QRErrorLevel::QR_MEDIUM: ecc = 1; break;
+        case QRErrorLevel::QR_QUARTILE: ecc = 2; break;
+        case QRErrorLevel::QR_HIGH: ecc = 3; break;
     }
     
     // Determine version needed

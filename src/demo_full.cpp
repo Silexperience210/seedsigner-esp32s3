@@ -123,9 +123,7 @@ private:
                     M5.Display.println("   OK (mixed)");
                 }
                 
-                if (frame._fb) {
-                    esp_camera_fb_return((camera_fb_t*)frame._fb);
-                }
+                // Camera frame cleanup handled by CameraFrame destructor
             }
             m_camera.deinit();
         } else {
@@ -256,7 +254,7 @@ private:
         
         // Generate QR
         Utils::QRCode qr;
-        if (m_qr_gen.generate(m_mnemonic, &qr, Utils::QRErrorLevel::MEDIUM)) {
+        if (m_qr_gen.generate(m_mnemonic, &qr, Utils::QRErrorLevel::QR_MEDIUM)) {
             // Render QR on screen (centered, scaled)
             int qr_size = qr.size;
             int scale = 6;  // Scale factor
