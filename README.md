@@ -1,9 +1,12 @@
 # 🔐 SeedSigner ESP32-S3 Edition
 
 > **Production-Grade Hardware Wallet Firmware**  
-> [![Version](https://img.shields.io/badge/version-0.2.0--production-green)](https://github.com/silexperience210/seedsigner-esp32s3)  
+> [![Version](https://img.shields.io/badge/version-0.2.0--production-green)](https://github.com/silexperience210/seedsigner-esp32s3/releases/tag/v0.2.0)  
 > [![Security](https://img.shields.io/badge/security-audited-success)](SECURITY_AUDIT_REPORT.md)  
-> [![Build](https://img.shields.io/badge/build-passing-success)](https://github.com/silexperience210/seedsigner-esp32s3/actions)
+> [![Build](https://img.shields.io/badge/build-passing-success)](https://github.com/silexperience210/seedsigner-esp32s3/actions)  
+> [![WebFlasher](https://img.shields.io/badge/webflasher-online-orange)](https://silexperience210.github.io/seedsigner-esp32s3/)
+
+**[⚡ Flash Now](https://silexperience210.github.io/seedsigner-esp32s3/)** | **[📥 Download](https://github.com/silexperience210/seedsigner-esp32s3/releases/tag/v0.2.0)** | **[🔒 Security Audit](SECURITY_AUDIT_REPORT.md)**
 
 Air-gapped, stateless Bitcoin hardware wallet firmware for ESP32-S3 (M5Stack CoreS3).
 
@@ -29,12 +32,28 @@ Air-gapped, stateless Bitcoin hardware wallet firmware for ESP32-S3 (M5Stack Cor
 
 ## 🚀 Quick Start
 
-### Requirements
+### ⚡ Flash in 1 Click (WebFlasher)
+
+**No software installation required!**
+
+1. Connect your M5Stack CoreS3 via USB
+2. Go to: **[https://silexperience210.github.io/seedsigner-esp32s3/](https://silexperience210.github.io/seedsigner-esp32s3/)**
+3. Click "Flash Production Firmware"
+4. Select your COM port
+5. Done!
+
+**Requirements:** Chrome, Edge, or Opera browser (Firefox/Safari not supported)
+
+---
+
+### 🔧 Manual Build & Flash
+
+#### Requirements
 - M5Stack CoreS3 (ESP32-S3, 16MB Flash, 8MB PSRAM)
 - USB-C cable
 - [PlatformIO](https://platformio.org/install)
 
-### Build & Flash
+#### Build & Flash
 
 ```bash
 # Clone repository
@@ -54,7 +73,7 @@ pio run -e m5stack-cores3 --target upload
 pio device monitor -b 115200
 ```
 
-### Run Tests
+#### Run Tests
 
 ```bash
 # Run all tests
@@ -96,6 +115,26 @@ verify_airgap();  // Runs every boot
 │ └───────────────────────────────┘  │
 │ Multi-pass wipe on free            │
 └─────────────────────────────────────┘
+```
+
+---
+
+## 📥 Downloads
+
+### Latest Release: v0.2.0
+
+| File | SHA256 | Description |
+|------|--------|-------------|
+| [seedsigner-v0.2.0-production.bin](https://github.com/silexperience210/seedsigner-esp32s3/releases/download/v0.2.0/seedsigner-v0.2.0-production.bin) | [checksum](https://github.com/silexperience210/seedsigner-esp32s3/releases/download/v0.2.0/checksums.txt) | Production firmware |
+| [seedsigner-v0.2.0-debug.bin](https://github.com/silexperience210/seedsigner-esp32s3/releases/download/v0.2.0/seedsigner-v0.2.0-debug.bin) | [checksum](https://github.com/silexperience210/seedsigner-esp32s3/releases/download/v0.2.0/checksums.txt) | Debug build with tests |
+
+### All Releases
+See [Releases Page](https://github.com/silexperience210/seedsigner-esp32s3/releases)
+
+### Flash via Command Line
+```bash
+# Using esptool
+esptool.py --chip esp32s3 --port /dev/ttyUSB0 write_flash 0x0 seedsigner-v0.2.0-production.bin
 ```
 
 ---
