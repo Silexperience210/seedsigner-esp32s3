@@ -1,0 +1,10 @@
+{
+  "name": "secp256k1-embedded",
+  "version": "1.0.0",
+  "description": "Production-grade secp256k1 implementation for ESP32-S3",
+  "keywords": ["secp256k1", "bitcoin", "crypto", "ecdsa"],
+  "frameworks": ["arduino"],
+  "platforms": ["espressif32"],
+  "license": "MIT",
+  "dependencies": {}
+}

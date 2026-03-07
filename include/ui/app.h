@@ -68,6 +68,7 @@ public:
     bool has_active_seed() const { return m_seed_loaded; }
     void load_seed(const uint8_t seed[64]);
     void clear_seed();
+    void reset_activity_timer();
     const Core::ExtendedKey* get_xpub() const { return &m_xpub; }
     
     // Settings
