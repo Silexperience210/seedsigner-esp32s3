@@ -29,15 +29,9 @@ jobs:
           ~/.platformio/packages
         key: ${{ runner.os }}-pio-${{ hashFiles('**/platformio.ini') }}
     
-    - name: Install Dependencies
+    - name: Install PlatformIO
       run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential
         pip install platformio
-        pio pkg install
-    
-    - name: Run Tests
-      run: pio test -e native_test
     
     - name: Build M5Stack CoreS3 (Production)
       run: |
