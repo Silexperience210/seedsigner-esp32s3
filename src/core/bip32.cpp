@@ -340,6 +340,15 @@ bool BIP32::get_public_key(const ExtendedKey* priv_key, ExtendedKey* pub_key) {
 }
 
 /**
+ * Compute HASH160 = RIPEMD160(SHA256(data))
+ */
+static void compute_hash160(const uint8_t* data, size_t len, uint8_t hash160[20]) {
+    uint8_t sha256_hash[32];
+    mbedtls_sha256(data, len, sha256_hash, 0);
+    RIPEMD160::hash(sha256_hash, 32, hash160);
+}
+
+/**
  * Compute fingerprint: first 4 bytes of HASH160(public_key)
  */
 uint32_t BIP32::get_fingerprint(const ExtendedKey* key) {
@@ -355,18 +364,14 @@ uint32_t BIP32::get_fingerprint(const ExtendedKey* key) {
     }
     
     // HASH160 = RIPEMD160(SHA256(pub_key))
-    uint8_t sha256_hash[32];
-    uint8_t ripemd160_hash[20];
+    uint8_t hash160[20];
+    compute_hash160(pub_key, 33, hash160);
     
-    mbedtls_sha256(pub_key, 33, sha256_hash, 0);
-    // TODO: Call RIPEMD160
-    // For now, use first 4 bytes of SHA256 as approximation
-    // In production, implement proper RIPEMD160
-    
-    uint32_t fingerprint = ((uint32_t)sha256_hash[0] << 24) |
-                           ((uint32_t)sha256_hash[1] << 16) |
-                           ((uint32_t)sha256_hash[2] << 8) |
-                           (uint32_t)sha256_hash[3];
+    // Fingerprint is first 4 bytes (big-endian)
+    uint32_t fingerprint = ((uint32_t)hash160[0] << 24) |
+                           ((uint32_t)hash160[1] << 16) |
+                           ((uint32_t)hash160[2] << 8) |
+                           (uint32_t)hash160[3];
     
     return fingerprint;
 }
@@ -387,15 +392,18 @@ bool BIP32::get_address(const ExtendedKey* key, char* address, size_t addr_len) 
         memcpy(pub_key, key->key, 33);
     }
     
-    // HASH160
+    // HASH160 = RIPEMD160(SHA256(pub_key))
     uint8_t hash160[20];
-    // TODO: Implement proper HASH160 = RIPEMD160(SHA256(pubkey))
-    // For now, placeholder
-    mbedtls_sha256(pub_key, 33, hash160, 0);
+    compute_hash160(pub_key, 33, hash160);
     
-    // Bech32 encode
-    // TODO: Implement bech32
-    snprintf(address, addr_len, "bc1q...");
+    // TODO: Implement bech32 encoding
+    // For now, return hash160 as hex (placeholder)
+    snprintf(address, addr_len, "bc1q");
+    for (int i = 0; i < 20 && strlen(address) < addr_len - 1; i++) {
+        char hex[3];
+        snprintf(hex, sizeof(hex), "%02x", hash160[i]);
+        strncat(address, hex, addr_len - strlen(address) - 1);
+    }
     
     return true;
 }

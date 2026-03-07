@@ -194,6 +194,79 @@ int secp256k1_ec_pubkey_serialize(const secp256k1_context* ctx,
     return 1;
 }
 
+/* 
+ * Decompress public key Y coordinate from X
+ * For secp256k1: y^2 = x^3 + 7 (mod p)
+ * Returns 1 on success, 0 on failure
+ */
+static int decompress_pubkey(const uint8_t x[32], uint8_t y_odd, uint8_t y[32]) {
+    mbedtls_mpi mp_x, mp_x3, mp_p, mp_y2, mp_y, mp_seven;
+    int ret = 0;
+    
+    mbedtls_mpi_init(&mp_x);
+    mbedtls_mpi_init(&mp_x3);
+    mbedtls_mpi_init(&mp_p);
+    mbedtls_mpi_init(&mp_y2);
+    mbedtls_mpi_init(&mp_y);
+    mbedtls_mpi_init(&mp_seven);
+    
+    /* Load curve prime p = 2^256 - 2^32 - 977 */
+    mbedtls_mpi_read_string(&mp_p, 16, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F");
+    
+    /* Load x */
+    mbedtls_mpi_read_binary(&mp_x, x, 32);
+    
+    /* Compute x^3 */
+    mbedtls_mpi_mul_mpi(&mp_x3, &mp_x, &mp_x);
+    mbedtls_mpi_mod_mpi(&mp_x3, &mp_x3, &mp_p);
+    mbedtls_mpi_mul_mpi(&mp_x3, &mp_x3, &mp_x);
+    mbedtls_mpi_mod_mpi(&mp_x3, &mp_x3, &mp_p);
+    
+    /* Compute x^3 + 7 */
+    mbedtls_mpi_lset(&mp_seven, 7);
+    mbedtls_mpi_add_mpi(&mp_y2, &mp_x3, &mp_seven);
+    mbedtls_mpi_mod_mpi(&mp_y2, &mp_y2, &mp_p);
+    
+    /* Compute sqrt(y^2) = y (mod p)
+     * For secp256k1 prime where p ≡ 3 (mod 4):
+     * y = (y^2)^((p+1)/4) mod p
+     */
+    mbedtls_mpi exp, result;
+    mbedtls_mpi_init(&exp);
+    mbedtls_mpi_init(&result);
+    
+    /* exp = (p + 1) / 4 */
+    mbedtls_mpi_copy(&exp, &mp_p);
+    mbedtls_mpi_add_int(&exp, &exp, 1);
+    mbedtls_mpi_shift_r(&exp, 2);  /* Divide by 4 */
+    
+    /* y = (y^2)^exp mod p */
+    mbedtls_mpi_exp_mod(&mp_y, &mp_y2, &exp, &mp_p, NULL);
+    
+    /* Check if y has correct parity */
+    int is_odd = mbedtls_mpi_get_bit(&mp_y, 0);
+    if (is_odd != y_odd) {
+        /* y' = p - y */
+        mbedtls_mpi_sub_mpi(&mp_y, &mp_p, &mp_y);
+    }
+    
+    /* Output Y */
+    mbedtls_mpi_write_binary(&mp_y, y, 32);
+    ret = 1;
+    
+cleanup:
+    mbedtls_mpi_free(&mp_x);
+    mbedtls_mpi_free(&mp_x3);
+    mbedtls_mpi_free(&mp_p);
+    mbedtls_mpi_free(&mp_y2);
+    mbedtls_mpi_free(&mp_y);
+    mbedtls_mpi_free(&mp_seven);
+    mbedtls_mpi_free(&exp);
+    mbedtls_mpi_free(&result);
+    
+    return ret;
+}
+
 /* Public key parsing */
 int secp256k1_ec_pubkey_parse(const secp256k1_context* ctx, 
                               secp256k1_pubkey* pubkey, 
@@ -202,20 +275,21 @@ int secp256k1_ec_pubkey_parse(const secp256k1_context* ctx,
     if (!ctx || !pubkey || !input) return 0;
     
     if (inputlen == 33) {
-        /* Compressed */
+        /* Compressed: 0x02 (even Y) or 0x03 (odd Y) || X */
         if (input[0] != 0x02 && input[0] != 0x03) return 0;
         
         /* Store X */
         memcpy(pubkey->data, input + 1, 32);
         
-        /* Decompress Y (requires sqrt) - simplified */
-        /* In production, implement proper decompression */
-        /* For now, mark as needing decompression */
-        memset(pubkey->data + 32, 0, 32);
+        /* Decompress Y */
+        uint8_t y_odd = (input[0] == 0x03) ? 1 : 0;
+        if (!decompress_pubkey(input + 1, y_odd, pubkey->data + 32)) {
+            return 0;
+        }
         
         return 1;
     } else if (inputlen == 65) {
-        /* Uncompressed */
+        /* Uncompressed: 0x04 || X || Y */
         if (input[0] != 0x04) return 0;
         
         memcpy(pubkey->data, input + 1, 32);      /* X */

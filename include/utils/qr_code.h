@@ -81,6 +81,9 @@ private:
                          uint8_t* ec, size_t ec_len);
 };
 
+// Maximum animated QR parts
+#define MAX_ANIMATED_PARTS 100
+
 // QR Code scanner (using camera)
 class QRCodeScanner {
 public:
@@ -93,21 +96,32 @@ public:
     // Start/stop scanning
     bool start();
     bool stop();
-    bool is_scanning() const { return m_scanning; }
+    bool is_scanning() const;
     
     // Process frame from camera
     bool process_frame(const uint8_t* grayscale, uint16_t width, uint16_t height);
     
     // Get result
-    bool has_result() const { return m_has_result; }
-    const char* get_result() const { return m_result; }
-    void clear_result() { m_has_result = false; m_result[0] = '\0'; }
+    bool has_result() const;
+    const char* get_result() const;
+    void clear_result();
     
-    // Animated QR (for large data)
+    // Animated QR (for large data like PSBTs)
     bool start_animated_scan();
     bool process_animated_frame();
     bool is_animation_complete() const;
     const char* get_animated_result() const;
+    uint8_t get_progress_percent() const;
+    void reset_animation();
+    
+    // Check if quirc is available
+    static bool has_quirc() {
+        #if __has_include(<quirc.h>)
+            return true;
+        #else
+            return false;
+        #endif
+    }
     
 private:
     bool m_initialized;
@@ -119,20 +133,15 @@ private:
     bool m_animated_mode;
     uint8_t m_expected_parts;
     uint8_t m_received_parts;
-    char m_animation_buffer[4096];  // For multi-part QR
+    char m_animation_buffer[4096];
+    uint8_t m_part_received[MAX_ANIMATED_PARTS];
     
-    // QR finder pattern detection
-    bool find_finder_patterns(const uint8_t* image, uint16_t w, uint16_t h,
-                              int16_t* x1, int16_t* y1,
-                              int16_t* x2, int16_t* y2,
-                              int16_t* x3, int16_t* y3);
+    // quirc handle (opaque pointer)
+    void* m_quirc;
     
-    // Perspective transform and sample
-    bool sample_qr_grid(const uint8_t* image, uint16_t w, uint16_t h,
-                        const int16_t* corners, QRCode* qr);
-    
-    // Decode QR content
-    bool decode_qr(const QRCode* qr, char* output, size_t output_len);
+    // Legacy stub implementations (if quirc not available)
+    bool find_finder_patterns_stub(const uint8_t* image, uint16_t w, uint16_t h);
+    bool sample_qr_grid_stub(const uint8_t* image, uint16_t w, uint16_t h);
 };
 
 } // namespace Utils

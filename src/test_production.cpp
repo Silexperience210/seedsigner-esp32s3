@@ -233,6 +233,40 @@ void run_ripemd160_tests() {
     TEST_ASSERT(match, "RIPEMD160 'a'");
 }
 
+void run_hash160_tests() {
+    Serial.println("\n=== HASH160 Tests ===");
+    
+    // Test HASH160 = RIPEMD160(SHA256(data))
+    // Known test vector for HASH160 of "hello"
+    const char* msg = "hello";
+    uint8_t hash160[20];
+    
+    // Compute SHA256
+    uint8_t sha256_hash[32];
+    mbedtls_sha256((const uint8_t*)msg, strlen(msg), sha256_hash, 0);
+    
+    // Compute RIPEMD160 of SHA256
+    Core::RIPEMD160::hash(sha256_hash, 32, hash160);
+    
+    // Expected result (computed with Python: hashlib.new('ripemd160', hashlib.sha256(b'hello').digest()).hexdigest())
+    // b6a9c8c230722b7c748331a8b450f05566cc7b90
+    uint8_t expected[20] = {
+        0xb6, 0xa9, 0xc8, 0xc2, 0x30, 0x72, 0x2b, 0x7c,
+        0x74, 0x83, 0x31, 0xa8, 0xb4, 0x50, 0xf0, 0x55,
+        0x66, 0xcc, 0x7b, 0x90
+    };
+    
+    bool match = memcmp(hash160, expected, 20) == 0;
+    TEST_ASSERT(match, "HASH160 'hello'");
+    
+    // Test via wrapper function
+    Core::Secp256k1 secp;
+    uint8_t hash160_wrapper[20];
+    secp.hash160((const uint8_t*)msg, strlen(msg), hash160_wrapper);
+    match = memcmp(hash160_wrapper, expected, 20) == 0;
+    TEST_ASSERT(match, "HASH160 via Secp256k1 wrapper");
+}
+
 void run_memory_tests() {
     Serial.println("\n=== Secure Memory Tests ===");
     
@@ -329,6 +363,7 @@ void run_all_tests() {
     run_bip32_tests();
     run_secp256k1_tests();
     run_ripemd160_tests();
+    run_hash160_tests();
     run_memory_tests();
     run_nfc_tests();
     
