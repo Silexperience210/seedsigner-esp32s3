@@ -1,0 +1,120 @@
+name: Build, Release & Deploy
+
+on:
+  push:
+    branches: [ master, main ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install PlatformIO
+      run: |
+        pip install platformio
+        pio --version
+    
+    - name: Build Production
+      run: |
+        pio run -e m5stack-cores3
+        ls -la .pio/build/m5stack-cores3/
+    
+    - name: Build Debug
+      run: |
+        pio run -e m5stack-cores3-debug
+        ls -la .pio/build/m5stack-cores3-debug/
+    
+    - name: Prepare Release Files
+      run: |
+        mkdir -p release
+        cp .pio/build/m5stack-cores3/firmware.bin release/seedsigner-v0.2.1-production.bin
+        cp .pio/build/m5stack-cores3-debug/firmware.bin release/seedsigner-v0.2.1-debug.bin
+        cd release
+        sha256sum *.bin > checksums.txt
+        cat checksums.txt
+        cd ..
+    
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: firmware-build
+        path: release/*
+        if-no-files-found: error
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: release/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-webflasher:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download Build Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: firmware-build
+        path: ./webflasher/firmware
+
+    - name: List downloaded files
+      run: |
+        ls -la ./webflasher/firmware/
+
+    - name: Update Manifest
+      run: |
+        cat > ./webflasher/manifest.json << 'EOF'
+        {
+          "name": "SeedSigner ESP32-S3",
+          "version": "v0.2.1",
+          "new_install_prompt_erase": true,
+          "builds": [
+            {
+              "chipFamily": "ESP32-S3",
+              "improv": false,
+              "parts": [
+                {
+                  "path": "./firmware/seedsigner-v0.2.1-production.bin",
+                  "offset": 0
+                }
+              ]
+            }
+          ]
+        }
+        EOF
+        cat ./webflasher/manifest.json
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v5
+
+    - name: Upload Pages Artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./webflasher
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
