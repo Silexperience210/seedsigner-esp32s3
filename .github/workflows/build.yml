@@ -1,97 +1,61 @@
-name: Build Firmware
+name: Build & Release Firmware
 
 on:
   push:
     branches: [ master, main ]
-    tags:
-      - 'v*'
+    tags: [ 'v*' ]
   workflow_dispatch:
 
 jobs:
-  build:
+  build-cores3:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.10'
     
     - name: Install PlatformIO
-      run: pip install platformio
+      run: |
+        pip install platformio
+        pio --version
     
     - name: Build Production
-      run: pio run -e m5stack-cores3
+      run: |
+        pio run -e m5stack-cores3
+        ls -la .pio/build/m5stack-cores3/
     
-    - name: Copy firmware
+    - name: Build Debug
+      run: |
+        pio run -e m5stack-cores3-debug
+        ls -la .pio/build/m5stack-cores3-debug/
+    
+    - name: Prepare Release Files
       run: |
         mkdir -p release
-        cp .pio/build/m5stack-cores3/firmware.bin release/firmware.bin
-        sha256sum release/firmware.bin > release/checksum.txt
-        cat release/checksum.txt
+        cp .pio/build/m5stack-cores3/firmware.bin release/seedsigner-v0.2.1-production.bin
+        cp .pio/build/m5stack-cores3-debug/firmware.bin release/seedsigner-v0.2.1-debug.bin
+        ls -la release/
     
-    - name: Upload artifact
+    - name: Generate Checksums
+      run: |
+        cd release
+        sha256sum *.bin > checksums.txt
+        cat checksums.txt
+        cd ..
+    
+    - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: firmware
-        path: release/
+        name: firmware-release
+        path: release/*
+        if-no-files-found: error
     
     - name: Release
-      if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
       with:
         files: release/*
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  webflasher:
-    needs: build
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    steps:
-    - uses: actions/checkout@v4
-    
-    - uses: actions/download-artifact@v4
-      with:
-        name: firmware
-        path: webflasher/
-    
-    - name: Create manifest
-      run: |
-        cat > webflasher/manifest.json << 'EOF'
-        {
-          "name": "SeedSigner ESP32-S3",
-          "version": "v0.2.1",
-          "builds": [{
-            "chipFamily": "ESP32-S3",
-            "parts": [{ "path": "firmware.bin", "offset": 0 }]
-          }]
-        }
-        EOF
-        
-        cat > webflasher/index.html << 'EOF'
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>SeedSigner ESP32-S3 Web Flasher</title>
-            <style>
-                body { font-family: sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
-                button { background: #F7931A; color: #000; padding: 20px 40px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; }
-            </style>
-        </head>
-        <body>
-            <h1>🔐 SeedSigner ESP32-S3</h1>
-            <p>Connect your device and click flash:</p>
-            <esp-web-install-button manifest="manifest.json">
-                <button slot="activate">Flash Firmware</button>
-            </esp-web-install-button>
-            <script type="module" src="https://unpkg.com/esp-web-tools@9/dist/web/install-button.js?module"></script>
-        </body>
-        </html>
-        EOF
-    
-    - uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./webflasher
