@@ -1,0 +1,17 @@
+{
+  "name": "SeedSigner ESP32-S3",
+  "version": "v0.2.1",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "improv": false,
+      "parts": [
+        {
+          "path": "https://github.com/Silexperience210/seedsigner-esp32s3/releases/download/v0.2.1/seedsigner-v0.2.1-production.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}

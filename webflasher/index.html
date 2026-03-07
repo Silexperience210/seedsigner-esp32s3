@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SeedSigner ESP32-S3 Web Flasher</title>
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+    }
+    .logo {
+      width: 120px;
+      height: 120px;
+      background: linear-gradient(135deg, #f7931a 0%, #ffab40 100%);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 30px;
+      font-size: 60px;
+      box-shadow: 0 10px 40px rgba(247, 147, 26, 0.3);
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #f7931a 0%, #ffab40 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      font-size: 1.2rem;
+      color: #888;
+      margin-bottom: 40px;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      padding: 40px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .version {
+      display: inline-block;
+      background: rgba(247, 147, 26, 0.2);
+      color: #f7931a;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+    .info {
+      text-align: left;
+      margin: 30px 0;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+    }
+    .info h3 {
+      color: #f7931a;
+      margin-bottom: 15px;
+    }
+    .info ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    .info li {
+      padding: 8px 0;
+      padding-left: 25px;
+      position: relative;
+    }
+    .info li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #4caf50;
+    }
+    .warning {
+      background: rgba(255, 152, 0, 0.1);
+      border: 1px solid rgba(255, 152, 0, 0.3);
+      border-radius: 12px;
+      padding: 15px;
+      margin: 20px 0;
+      font-size: 0.9rem;
+    }
+    .warning strong {
+      color: #ff9800;
+    }
+    esp-web-install-button {
+      display: block;
+      margin: 30px 0;
+    }
+    esp-web-install-button button {
+      background: linear-gradient(135deg, #f7931a 0%, #ffab40 100%) !important;
+      color: #000 !important;
+      border: none !important;
+      padding: 18px 40px !important;
+      font-size: 1.1rem !important;
+      font-weight: bold !important;
+      border-radius: 12px !important;
+      cursor: pointer !important;
+      transition: transform 0.2s, box-shadow 0.2s !important;
+      box-shadow: 0 4px 20px rgba(247, 147, 26, 0.4) !important;
+    }
+    esp-web-install-button button:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 6px 30px rgba(247, 147, 26, 0.5) !important;
+    }
+    .footer {
+      margin-top: 40px;
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .footer a {
+      color: #f7931a;
+      text-decoration: none;
+    }
+    .footer a:hover {
+      text-decoration: underline;
+    }
+    .instructions {
+      margin-top: 30px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      text-align: left;
+    }
+    .instructions h3 {
+      color: #f7931a;
+      margin-bottom: 15px;
+    }
+    .instructions ol {
+      padding-left: 20px;
+    }
+    .instructions li {
+      padding: 10px 0;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">🔐</div>
+    <h1>SeedSigner ESP32-S3</h1>
+    <p class="subtitle">Air-gapped Bitcoin signing device</p>
+    
+    <div class="card">
+      <span class="version">Version v0.2.1</span>
+      
+      <div class="info">
+        <h3>⚡ Features</h3>
+        <ul>
+          <li>BIP39 Seed generation & backup</li>
+          <li>XPUB/YPUB/ZPUB export</li>
+          <li>PSBT signing</li>
+          <li>Address verification</li>
+          <li>QR code display & scanning</li>
+          <li>Built for M5Stack CoreS3</li>
+        </ul>
+      </div>
+      
+      <div class="warning">
+        <strong>⚠️ Important:</strong> Use Chrome, Edge, or Opera browser. 
+        Connect your ESP32-S3 via USB and click "Connect" to flash.
+      </div>
+      
+      <esp-web-install-button 
+        manifest="./manifest.json"
+        install-supported="">
+        <button slot="activate">Connect & Install</button>
+        <span slot="unsupported">Use Chrome, Edge, or Opera browser</span>
+      </esp-web-install-button>
+      
+      <div class="instructions">
+        <h3>📋 Instructions</h3>
+        <ol>
+          <li>Connect your M5Stack CoreS3 to USB</li>
+          <li>Click "Connect & Install" above</li>
+          <li>Select the COM port in the popup</li>
+          <li>Wait for the flash to complete (~30 seconds)</li>
+          <li>Device will restart automatically</li>
+        </ol>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>Open source on <a href="https://github.com/Silexperience210/seedsigner-esp32s3">GitHub</a></p>
+      <p>Firmware: v0.2.1 | Built with ❤️ for Bitcoin</p>
+    </div>
+  </div>
+</body>
+</html>
