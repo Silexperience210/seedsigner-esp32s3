@@ -1,404 +1,97 @@
-name: Build & Release Firmware
+name: Build Firmware
 
 on:
   push:
     branches: [ master, main ]
     tags:
       - 'v*'
-  pull_request:
-    branches: [ master, main ]
   workflow_dispatch:
 
 jobs:
-  build-cores3:
+  build:
     runs-on: ubuntu-latest
-    
     steps:
     - uses: actions/checkout@v4
     
-    - name: Setup Python
-      uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.11'
     
     - name: Install PlatformIO
-      run: |
-        pip install platformio
-        pio --version
+      run: pip install platformio
     
-    - name: Build M5Stack CoreS3 (Production)
+    - name: Build Production
+      run: pio run -e m5stack-cores3
+    
+    - name: Copy firmware
       run: |
-        pio run -e m5stack-cores3
         mkdir -p release
-        cp .pio/build/m5stack-cores3/firmware.bin release/seedsigner-v0.2.1-production.bin
+        cp .pio/build/m5stack-cores3/firmware.bin release/firmware.bin
+        sha256sum release/firmware.bin > release/checksum.txt
+        cat release/checksum.txt
     
-    - name: Build M5Stack CoreS3 (Debug)
-      run: |
-        pio run -e m5stack-cores3-debug
-        cp .pio/build/m5stack-cores3-debug/firmware.bin release/seedsigner-v0.2.1-debug.bin
-    
-    - name: Generate Checksums
-      run: |
-        cd release
-        sha256sum *.bin > checksums.txt
-        cat checksums.txt
-    
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
       with:
-        name: firmware-release
-        path: |
-          release/*.bin
-          release/checksums.txt
+        name: firmware
+        path: release/
     
-    - name: Upload to Release
+    - name: Release
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
-        files: |
-          release/*.bin
-          release/checksums.txt
-        body: |
-          ## SeedSigner ESP32-S3 Production Release
-          
-          ### Security Verified
-          - ✅ All 35 tests passing
-          - ✅ Security audit completed
-          - ✅ Air-gap enforced
-          - ✅ JTAG disabled
-          
-          ### Files
-          - `seedsigner-v0.2.1-production.bin` - Production firmware
-          - `seedsigner-v0.2.1-debug.bin` - Debug build with tests
-          - `checksums.txt` - SHA256 checksums
-          
-          ### Flashing
-          ```bash
-          esptool.py --chip esp32s3 --port /dev/ttyUSB0 write_flash 0x0 seedsigner-v0.2.1-production.bin
-          ```
-          
-          See [FLASHING_GUIDE.md](https://github.com/${{ github.repository }}/blob/master/FLASHING_GUIDE.md) for details.
+        files: release/*
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  security-checks:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Check for secrets
-      uses: trufflesecurity/trufflehog@main
-      with:
-        path: ./
-        base: main
-    
-    - name: CodeQL Analysis
-      uses: github/codeql-action/init@v2
-      with:
-        languages: cpp
-    
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v2
-    
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
-
   webflasher:
-    needs: build-cores3
+    needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
-    
+    if: startsWith(github.ref, 'refs/tags/')
     steps:
     - uses: actions/checkout@v4
     
-    - name: Download Build Artifacts
-      uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
-        name: firmware-release
+        name: firmware
         path: webflasher/
     
-    - name: Setup Webflasher Page
+    - name: Create manifest
       run: |
-        mkdir -p webflasher
+        cat > webflasher/manifest.json << 'EOF'
+        {
+          "name": "SeedSigner ESP32-S3",
+          "version": "v0.2.1",
+          "builds": [{
+            "chipFamily": "ESP32-S3",
+            "parts": [{ "path": "firmware.bin", "offset": 0 }]
+          }]
+        }
+        EOF
+        
         cat > webflasher/index.html << 'EOF'
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="UTF-8">
             <title>SeedSigner ESP32-S3 Web Flasher</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
-                * { box-sizing: border-box; }
-                body {
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                    max-width: 800px;
-                    margin: 0 auto;
-                    padding: 20px;
-                    background: #0d1117;
-                    color: #c9d1d9;
-                    line-height: 1.6;
-                }
-                h1 { 
-                    color: #F7931A; 
-                    text-align: center;
-                    font-size: 2.5em;
-                    margin-bottom: 10px;
-                }
-                .subtitle {
-                    text-align: center;
-                    color: #8b949e;
-                    margin-bottom: 30px;
-                }
-                .warning {
-                    background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
-                    padding: 20px;
-                    border-radius: 12px;
-                    margin: 20px 0;
-                    border-left: 5px solid #ff4444;
-                }
-                .warning strong { color: #fff; font-size: 1.1em; }
-                .button-container {
-                    text-align: center;
-                    margin: 40px 0;
-                    padding: 30px;
-                    background: #161b22;
-                    border-radius: 16px;
-                    border: 2px solid #30363d;
-                }
-                .flash-button {
-                    background: linear-gradient(135deg, #F7931A 0%, #d47b0f 100%);
-                    color: #000;
-                    padding: 20px 40px;
-                    border: none;
-                    border-radius: 12px;
-                    font-size: 20px;
-                    font-weight: bold;
-                    cursor: pointer;
-                    margin: 10px;
-                    box-shadow: 0 4px 15px rgba(247, 147, 26, 0.3);
-                    transition: transform 0.2s, box-shadow 0.2s;
-                }
-                .flash-button:hover { 
-                    transform: translateY(-2px);
-                    box-shadow: 0 6px 20px rgba(247, 147, 26, 0.4);
-                }
-                .info {
-                    background: #161b22;
-                    padding: 20px;
-                    border-radius: 12px;
-                    margin: 20px 0;
-                    border: 1px solid #30363d;
-                }
-                .info h3 {
-                    color: #F7931A;
-                    margin-top: 0;
-                    border-bottom: 1px solid #30363d;
-                    padding-bottom: 10px;
-                }
-                code {
-                    background: #0d1117;
-                    padding: 3px 8px;
-                    border-radius: 6px;
-                    font-family: 'SF Mono', Monaco, monospace;
-                    font-size: 0.9em;
-                    border: 1px solid #30363d;
-                }
-                .badge {
-                    display: inline-block;
-                    padding: 5px 12px;
-                    border-radius: 20px;
-                    font-size: 0.85em;
-                    font-weight: bold;
-                    margin: 5px;
-                }
-                .badge.success { background: #238636; color: #fff; }
-                .badge.warning { background: #9e6a03; color: #fff; }
-                .features {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                    gap: 15px;
-                    margin: 20px 0;
-                }
-                .feature {
-                    background: #0d1117;
-                    padding: 15px;
-                    border-radius: 8px;
-                    border: 1px solid #30363d;
-                }
-                .footer {
-                    text-align: center;
-                    color: #8b949e;
-                    margin-top: 40px;
-                    padding-top: 20px;
-                    border-top: 1px solid #30363d;
-                }
-                .footer a {
-                    color: #F7931A;
-                    text-decoration: none;
-                    margin: 0 10px;
-                }
-                .footer a:hover { text-decoration: underline; }
-                pre {
-                    background: #0d1117;
-                    padding: 15px;
-                    border-radius: 8px;
-                    overflow-x: auto;
-                    border: 1px solid #30363d;
-                    font-size: 0.85em;
-                }
-                ol li { margin: 10px 0; }
+                body { font-family: sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+                button { background: #F7931A; color: #000; padding: 20px 40px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; }
             </style>
         </head>
         <body>
             <h1>🔐 SeedSigner ESP32-S3</h1>
-            <p class="subtitle">Production-Grade Bitcoin Hardware Wallet Firmware</p>
-            
-            <div style="text-align: center;">
-                <span class="badge success">✅ v0.2.1 Production</span>
-                <span class="badge success">✅ Security Audited</span>
-                <span class="badge warning">⚠️ Air-Gap Enforced</span>
-            </div>
-            
-            <div class="warning">
-                <strong>⚠️ Security Warning:</strong>
-                <ul>
-                    <li><strong>Only flash firmware from official sources</strong></li>
-                    <li>Verify the SHA256 checksum before flashing</li>
-                    <li>This firmware permanently disables WiFi and Bluetooth</li>
-                    <li>Use Chrome, Edge, or Opera browser (Firefox/Safari not supported)</li>
-                </ul>
-            </div>
-            
-            <div class="button-container">
-                <h2 style="margin-top: 0; color: #F7931A;">⚡ One-Click Flash</h2>
-                <p>No software installation required!</p>
-                <esp-web-install-button
-                    manifest="manifest.json">
-                    <button slot="activate" class="flash-button">🔧 Flash to M5Stack CoreS3</button>
-                    <span slot="unsupported" style="color: #ff4444;">
-                        ❌ Your browser is not supported.<br>
-                        Please use Chrome, Edge, or Opera.
-                    </span>
-                </esp-web-install-button>
-                <p style="margin-top: 20px; font-size: 0.9em; color: #8b949e;">
-                    Connect your device via USB, then click the button above
-                </p>
-            </div>
-            
-            <div class="features">
-                <div class="feature">
-                    <strong>🔒 Air-Gapped</strong><br>
-                    WiFi/BT permanently disabled
-                </div>
-                <div class="feature">
-                    <strong>🛡️ Stateless</strong><br>
-                    Seeds only in RAM, never stored
-                </div>
-                <div class="feature">
-                    <strong>✅ Audited</strong><br>
-                    35 security tests passing
-                </div>
-                <div class="feature">
-                    <strong>🔐 Encrypted</strong><br>
-                    NFC backup with AES-128
-                </div>
-            </div>
-            
-            <div class="info">
-                <h3>📋 Flashing Instructions</h3>
-                <ol>
-                    <li>Connect your <strong>M5Stack CoreS3</strong> via USB-C cable</li>
-                    <li>Click the <strong>"Flash"</strong> button above</li>
-                    <li>Select the correct <strong>COM port</strong> (USB Serial)</li>
-                    <li>Click <strong>Install</strong> and wait (about 30 seconds)</li>
-                    <li>Device will restart automatically with SeedSigner firmware</li>
-                </ol>
-                
-                <h3>🔧 Troubleshooting</h3>
-                <p><strong>Flash fails?</strong> Put device in download mode:</p>
-                <ol>
-                    <li>Hold <strong>BOOT</strong> button</li>
-                    <li>Press and release <strong>RESET</strong></li>
-                    <li>Release <strong>BOOT</strong> button</li>
-                    <li>Try flashing again</li>
-                </ol>
-            </div>
-            
-            <div class="info">
-                <h3>📊 Firmware Info</h3>
-                <p><strong>Version:</strong> v0.2.0-production</p>
-                <p><strong>Build:</strong> <code>${{ github.sha }}</code></p>
-                
-                <h4>SHA256 Checksums:</h4>
-                <pre id="checksums">Loading checksums...</pre>
-                
-                <p style="margin-top: 15px;">
-                    <a href="https://github.com/silexperience210/seedsigner-esp32s3/releases/tag/v0.2.0" 
-                       style="color: #F7931A; text-decoration: none;">
-                        📥 Download firmware files from GitHub Releases →
-                    </a>
-                </p>
-            </div>
-            
-            <div class="info">
-                <h3>📚 Resources</h3>
-                <ul>
-                    <li><a href="https://github.com/silexperience210/seedsigner-esp32s3/blob/master/FLASHING_GUIDE.md" style="color: #F7931A;">Detailed Flashing Guide</a></li>
-                    <li><a href="https://github.com/silexperience210/seedsigner-esp32s3/blob/master/SECURITY_AUDIT_REPORT.md" style="color: #F7931A;">Security Audit Report</a></li>
-                    <li><a href="https://github.com/silexperience210/seedsigner-esp32s3/blob/master/PRODUCTION_READY.md" style="color: #F7931A;">Production Release Notes</a></li>
-                </ul>
-            </div>
-            
-            <div class="footer">
-                <p>
-                    <a href="https://github.com/silexperience210/seedsigner-esp32s3">GitHub Repository</a> |
-                    <a href="https://github.com/silexperience210/seedsigner-esp32s3/releases">Releases</a> |
-                    <a href="https://github.com/silexperience210/seedsigner-esp32s3/issues">Issues</a>
-                </p>
-                <p style="font-size: 0.85em; margin-top: 20px;">
-                    🔐 Built with security in mind for the Bitcoin community.<br>
-                    <em>Production-hardened by comprehensive security audit - March 2026</em>
-                </p>
-            </div>
-            
-            <script>
-                // Load checksums
-                fetch('checksums.txt')
-                    .then(r => r.text())
-                    .then(text => {
-                        document.getElementById('checksums').textContent = text;
-                    })
-                    .catch(() => {
-                        document.getElementById('checksums').textContent = 
-                            'Error loading checksums. Please download from GitHub Releases.';
-                    });
-            </script>
+            <p>Connect your device and click flash:</p>
+            <esp-web-install-button manifest="manifest.json">
+                <button slot="activate">Flash Firmware</button>
+            </esp-web-install-button>
             <script type="module" src="https://unpkg.com/esp-web-tools@9/dist/web/install-button.js?module"></script>
         </body>
         </html>
         EOF
-        
-        cat > webflasher/manifest.json << 'EOF'
-        {
-          "name": "SeedSigner ESP32-S3",
-          "version": "v0.2.1-production",
-          "home_assistant_domain": "seedsigner",
-          "new_install_prompt_erase": true,
-          "builds": [
-            {
-              "chipFamily": "ESP32-S3",
-              "parts": [
-                { "path": "seedsigner-v0.2.1-production.bin", "offset": 0 }
-              ]
-            }
-          ]
-        }
-        EOF
     
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
+    - uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./webflasher
-        cname: flash.seedsigner-s3.io
