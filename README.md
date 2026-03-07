@@ -1,12 +1,12 @@
 # 🔐 SeedSigner ESP32-S3 Edition
 
 > **Production-Grade Hardware Wallet Firmware**  
-> [![Version](https://img.shields.io/badge/version-0.2.0--production-green)](https://github.com/silexperience210/seedsigner-esp32s3/releases/tag/v0.2.0)  
+> [![Version](https://img.shields.io/badge/version-0.2.0--production-green)](https://github.com/silexperience210/seedsigner-esp32s3/releases/tag/v0.2.1)  
 > [![Security](https://img.shields.io/badge/security-audited-success)](SECURITY_AUDIT_REPORT.md)  
 > [![Build](https://img.shields.io/badge/build-passing-success)](https://github.com/silexperience210/seedsigner-esp32s3/actions)  
 > [![WebFlasher](https://img.shields.io/badge/webflasher-online-orange)](https://silexperience210.github.io/seedsigner-esp32s3/)
 
-**[⚡ Flash Now](https://silexperience210.github.io/seedsigner-esp32s3/)** | **[📥 Download](https://github.com/silexperience210/seedsigner-esp32s3/releases/tag/v0.2.0)** | **[🔒 Security Audit](SECURITY_AUDIT_REPORT.md)**
+**[⚡ Flash Now](https://silexperience210.github.io/seedsigner-esp32s3/)** | **[📥 Download](https://github.com/silexperience210/seedsigner-esp32s3/releases/tag/v0.2.1)** | **[🔒 Security Audit](SECURITY_AUDIT_REPORT.md)**
 
 Air-gapped, stateless Bitcoin hardware wallet firmware for ESP32-S3 (M5Stack CoreS3).
 
@@ -14,7 +14,7 @@ Air-gapped, stateless Bitcoin hardware wallet firmware for ESP32-S3 (M5Stack Cor
 
 ---
 
-## 🎯 What's New in v0.2.0
+## 🎯 What's New in v0.2.1
 
 ### Production-Ready Security
 - ✅ **Full secp256k1 implementation** (was fake/stub)
@@ -121,12 +121,12 @@ verify_airgap();  // Runs every boot
 
 ## 📥 Downloads
 
-### Latest Release: v0.2.0
+### Latest Release: v0.2.1
 
 | File | SHA256 | Description |
 |------|--------|-------------|
-| [seedsigner-v0.2.0-production.bin](https://github.com/silexperience210/seedsigner-esp32s3/releases/download/v0.2.0/seedsigner-v0.2.0-production.bin) | [checksum](https://github.com/silexperience210/seedsigner-esp32s3/releases/download/v0.2.0/checksums.txt) | Production firmware |
-| [seedsigner-v0.2.0-debug.bin](https://github.com/silexperience210/seedsigner-esp32s3/releases/download/v0.2.0/seedsigner-v0.2.0-debug.bin) | [checksum](https://github.com/silexperience210/seedsigner-esp32s3/releases/download/v0.2.0/checksums.txt) | Debug build with tests |
+| [seedsigner-v0.2.1-production.bin](https://github.com/silexperience210/seedsigner-esp32s3/releases/download/v0.2.1/seedsigner-v0.2.1-production.bin) | [checksum](https://github.com/silexperience210/seedsigner-esp32s3/releases/download/v0.2.1/checksums.txt) | Production firmware |
+| [seedsigner-v0.2.1-debug.bin](https://github.com/silexperience210/seedsigner-esp32s3/releases/download/v0.2.1/seedsigner-v0.2.1-debug.bin) | [checksum](https://github.com/silexperience210/seedsigner-esp32s3/releases/download/v0.2.1/checksums.txt) | Debug build with tests |
 
 ### All Releases
 See [Releases Page](https://github.com/silexperience210/seedsigner-esp32s3/releases)
@@ -134,7 +134,7 @@ See [Releases Page](https://github.com/silexperience210/seedsigner-esp32s3/relea
 ### Flash via Command Line
 ```bash
 # Using esptool
-esptool.py --chip esp32s3 --port /dev/ttyUSB0 write_flash 0x0 seedsigner-v0.2.0-production.bin
+esptool.py --chip esp32s3 --port /dev/ttyUSB0 write_flash 0x0 seedsigner-v0.2.1-production.bin
 ```
 
 ---
@@ -254,7 +254,7 @@ Enables:
 ## 📜 Documentation
 
 - [Security Audit Report](SECURITY_AUDIT_REPORT.md) - Full security review
-- [Production Release Notes](PRODUCTION_READY.md) - v0.2.0 details
+- [Production Release Notes](PRODUCTION_READY.md) - v0.2.1 details
 - [Development Guide](docs/DEVELOPMENT.md) - Contributing
 - [Hardware Guide](docs/HARDWARE.md) - Hardware setup
 

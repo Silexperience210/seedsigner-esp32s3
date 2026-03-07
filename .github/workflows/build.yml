@@ -41,12 +41,12 @@ jobs:
       run: |
         pio run -e m5stack-cores3
         mkdir -p release
-        cp .pio/build/m5stack-cores3/firmware.bin release/seedsigner-v0.2.0-production.bin
+        cp .pio/build/m5stack-cores3/firmware.bin release/seedsigner-v0.2.1-production.bin
     
     - name: Build M5Stack CoreS3 (Debug)
       run: |
         pio run -e m5stack-cores3-debug
-        cp .pio/build/m5stack-cores3-debug/firmware.bin release/seedsigner-v0.2.0-debug.bin
+        cp .pio/build/m5stack-cores3-debug/firmware.bin release/seedsigner-v0.2.1-debug.bin
     
     - name: Generate Checksums
       run: |
@@ -79,13 +79,13 @@ jobs:
           - ✅ JTAG disabled
           
           ### Files
-          - `seedsigner-v0.2.0-production.bin` - Production firmware
-          - `seedsigner-v0.2.0-debug.bin` - Debug build with tests
+          - `seedsigner-v0.2.1-production.bin` - Production firmware
+          - `seedsigner-v0.2.1-debug.bin` - Debug build with tests
           - `checksums.txt` - SHA256 checksums
           
           ### Flashing
           ```bash
-          esptool.py --chip esp32s3 --port /dev/ttyUSB0 write_flash 0x0 seedsigner-v0.2.0-production.bin
+          esptool.py --chip esp32s3 --port /dev/ttyUSB0 write_flash 0x0 seedsigner-v0.2.1-production.bin
           ```
           
           See [FLASHING_GUIDE.md](https://github.com/${{ github.repository }}/blob/master/FLASHING_GUIDE.md) for details.
@@ -266,7 +266,7 @@ jobs:
             <p class="subtitle">Production-Grade Bitcoin Hardware Wallet Firmware</p>
             
             <div style="text-align: center;">
-                <span class="badge success">✅ v0.2.0 Production</span>
+                <span class="badge success">✅ v0.2.1 Production</span>
                 <span class="badge success">✅ Security Audited</span>
                 <span class="badge warning">⚠️ Air-Gap Enforced</span>
             </div>
@@ -393,14 +393,14 @@ jobs:
         cat > webflasher/manifest.json << 'EOF'
         {
           "name": "SeedSigner ESP32-S3",
-          "version": "v0.2.0-production",
+          "version": "v0.2.1-production",
           "home_assistant_domain": "seedsigner",
           "new_install_prompt_erase": true,
           "builds": [
             {
               "chipFamily": "ESP32-S3",
               "parts": [
-                { "path": "seedsigner-v0.2.0-production.bin", "offset": 0 }
+                { "path": "seedsigner-v0.2.1-production.bin", "offset": 0 }
               ]
             }
           ]
